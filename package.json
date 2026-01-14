@@ -1,0 +1,30 @@
+
+{
+  "name": "rpatchur-next",
+  "version": "1.0.0",
+  "main": "main.js",
+  "description": "Next-gen Ragnarok Patcher",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && electron-builder",
+    "preview": "vite preview",
+    "electron:start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3",
+    "vite": "^5.0.0",
+    "typescript": "^5.0.0"
+  },
+  "build": {
+    "appId": "com.rpatchur.next",
+    "productName": "rpatchur-next",
+    "win": {
+      "target": "portable",
+      "icon": "public/icon.ico"
+    },
+    "directories": {
+      "output": "dist_electron"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "rpatchur-next",
+  "description": "A high-performance, customizable game patcher and launcher for Ragnarok Online and other GRF-based games, built with React, Tailwind, and Electron architecture.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
