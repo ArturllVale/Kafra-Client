@@ -1,0 +1,46 @@
+# RPatchur Configuration File
+# This file configures the patcher's behavior
+
+# Window settings
+window:
+  title: "RPatchur"
+  width: 900
+  height: 600
+  resizable: false
+
+# Play button configuration
+play:
+  path: "ragnarok.exe"
+  arguments: []
+  exit_on_success: true
+
+# Setup button configuration (optional)
+# setup:
+#   path: "setup.exe"
+#   arguments: []
+#   exit_on_success: false
+
+# Web/Patching configuration
+web:
+  index_url: ""
+  # preferred_patch_server: "Primary"
+  patch_servers:
+    - name: "Primary"
+      plist_url: "https://your-server.com/plist.txt"
+      patch_url: "https://your-server.com/patches"
+    # - name: "Mirror"
+    #   plist_url: "https://mirror.your-server.com/plist.txt"
+    #   patch_url: "https://mirror.your-server.com/patches"
+
+# Client settings
+client:
+  default_grf_name: "data.grf"
+  # New options for data.ini toggle
+  normal_grf: "adata.grf"
+  gray_grf: "sdata.grf"
+
+# Patching behavior
+patching:
+  in_place: true
+  check_integrity: true
+  create_grf: false
