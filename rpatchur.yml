@@ -3,7 +3,7 @@
 
 # Window settings
 window:
-  title: "RPatchur"
+  title: "Kafra Client"
   width: 900
   height: 600
   resizable: false

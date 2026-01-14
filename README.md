@@ -1,4 +1,4 @@
-# RPatchur Next Gen - Ragnarok Online Patcher
+# Kafra Client - Ragnarok Online Patcher
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Electron](https://img.shields.io/badge/Electron-31.0-47848f.svg)

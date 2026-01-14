@@ -83,10 +83,10 @@ export const PatcherUI: React.FC<PatcherUIProps> = ({
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
                 <div className="relative z-10 flex flex-col items-center justify-center h-full">
                     <h1 className="text-5xl font-black italic tracking-tighter text-white drop-shadow-2xl">
-                        RPATCHUR
+                        KAFRA CLIENT
                     </h1>
                     <p className="text-blue-300 text-sm font-medium tracking-[0.3em] uppercase mt-2">
-                        Next Generation Patcher
+                        Premium Ragnarok Launcher
                     </p>
                 </div>
             </div>
@@ -253,7 +253,7 @@ export const PatcherUI: React.FC<PatcherUIProps> = ({
                     <div className="flex-1 text-[10px] text-slate-500 leading-tight">
                         <span className="font-mono">v1.0.0</span>
                         <span className="mx-2">•</span>
-                        <span>RPatchur Electron Edition</span>
+                        <span>Kafra Client Engine</span>
                     </div>
 
                     {isPatching && (
