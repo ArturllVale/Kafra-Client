@@ -1,6 +1,6 @@
 use super::types::*;
 use std::collections::HashMap;
-use std::fs::{File, OpenOptions};
+use std::fs::OpenOptions;
 use std::io::{Write, Seek, SeekFrom};
 
 pub struct GrfWriter;
@@ -14,7 +14,7 @@ impl GrfWriter {
     pub fn quick_merge(
         &self,
         grf_path: &str,
-        header: &GrfHeader,
+        _header: &GrfHeader,
         mut table: HashMap<String, GrfEntry>,
         new_files: HashMap<String, Vec<u8>>,
         _deletions: std::collections::HashSet<String>,
@@ -44,8 +44,8 @@ impl GrfWriter {
                 real_size: data.len() as i32,
                 flags: 0x01, // FILE flag
                 offset: (data_offset - GRF_HEADER_SIZE as u64) as i32,
-                is_new: true,
-                data: Some(data.clone()),
+                _is_new: true,
+                _data: Some(data.clone()),
             };
 
             file.write_all(data)

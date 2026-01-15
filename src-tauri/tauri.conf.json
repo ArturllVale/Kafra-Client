@@ -39,6 +39,9 @@
                     "http://**",
                     "https://**"
                 ]
+            },
+            "window": {
+                "all": true
             }
         },
         "bundle": {

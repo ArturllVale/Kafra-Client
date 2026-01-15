@@ -21,7 +21,13 @@ const App: React.FC = () => {
 
     // Music setup
     useEffect(() => {
+        if (!config) {
+            console.log('[DEBUG] Audio: Config not loaded yet, skipping music setup');
+            return;
+        }
+
         const bgmFile = config?.client?.bgm || 'bgm.mp3';
+        console.log('[DEBUG] Audio: Setting up BGM file:', bgmFile);
         audio.src = `/${bgmFile}`;
         audio.loop = true;
         audio.volume = 0.3;
@@ -29,9 +35,11 @@ const App: React.FC = () => {
         // Force play immediately (Electron autoplay policy allows this now)
         const startMusic = async () => {
             try {
+                console.log('[DEBUG] Audio: Attempting to play...');
                 await audio.play();
+                console.log('[DEBUG] Audio: Playing successfully!');
             } catch (e) {
-                console.warn("Autoplay blocked/failed, waiting for interaction", e);
+                console.warn("[DEBUG] Audio: Autoplay blocked/failed, waiting for interaction", e);
                 const playOnClick = () => {
                     audio.play().catch(console.error);
                     window.removeEventListener('click', playOnClick);
@@ -255,8 +263,8 @@ const App: React.FC = () => {
 
         try {
             const result = await invoke<{ success: boolean; is_gray?: boolean; error?: string }>('toggle_grf', {
-                normal: 'adata.grf',
-                gray: 'sdata.grf'
+                normal: config?.client?.normal_grf || 'adata.grf',
+                gray: config?.client?.gray_grf || 'sdata.grf'
             });
 
             if (result.success) {

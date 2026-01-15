@@ -65,7 +65,7 @@ pub async fn fetch_patch_list(plist_url: &str) -> Result<Vec<PatchInfo>, String>
     Ok(patches)
 }
 
-pub fn get_applied_patches(cache_path: &str) -> Vec<u32> {
+pub fn _get_applied_patches(cache_path: &str) -> Vec<u32> {
     match std::fs::read_to_string(cache_path) {
         Ok(content) => {
             if let Ok(cache) = serde_json::from_str::<serde_json::Value>(&content) {
@@ -82,7 +82,7 @@ pub fn get_applied_patches(cache_path: &str) -> Vec<u32> {
     }
 }
 
-pub fn save_applied_patches(cache_path: &str, patches: &[u32]) -> Result<(), String> {
+pub fn _save_applied_patches(cache_path: &str, patches: &[u32]) -> Result<(), String> {
     let cache = serde_json::json!({
         "appliedPatches": patches,
         "lastUpdated": chrono::Utc::now().to_rfc3339()
@@ -92,7 +92,7 @@ pub fn save_applied_patches(cache_path: &str, patches: &[u32]) -> Result<(), Str
         .map_err(|e| format!("Failed to save cache: {}", e))
 }
 
-pub fn get_unapplied_patches(all_patches: &[PatchInfo], applied_indices: &[u32]) -> Vec<PatchInfo> {
+pub fn _get_unapplied_patches(all_patches: &[PatchInfo], applied_indices: &[u32]) -> Vec<PatchInfo> {
     let applied_set: std::collections::HashSet<u32> = applied_indices.iter().copied().collect();
     
     all_patches

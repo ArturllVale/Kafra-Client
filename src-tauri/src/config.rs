@@ -42,6 +42,14 @@ pub struct PatchServer {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CustomAction {
+    pub label: String,
+    pub r#type: String,
+    pub target: String,
+    pub color: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WebConfig {
     pub index_url: String,
     pub preferred_patch_server: Option<String>,
@@ -53,6 +61,12 @@ pub struct WebConfig {
 pub struct ClientConfig {
     #[serde(default = "default_grf_name")]
     pub default_grf_name: String,
+    #[serde(default)]
+    pub bgm: Option<String>,
+    #[serde(default)]
+    pub normal_grf: Option<String>,
+    #[serde(default)]
+    pub gray_grf: Option<String>,
     #[serde(default)]
     pub sso_login: bool,
 }
@@ -134,6 +148,7 @@ pub struct PatcherConfig {
     pub client: ClientConfig,
     pub patching: PatchingConfig,
     pub messages: Option<MessagesConfig>,
+    pub custom_actions: Option<Vec<CustomAction>>,
 }
 
 // Default functions
@@ -186,6 +201,9 @@ impl Default for PatcherConfig {
             },
             client: ClientConfig {
                 default_grf_name: default_grf_name(),
+                bgm: None,
+                normal_grf: None,
+                gray_grf: None,
                 sso_login: false,
             },
             patching: PatchingConfig {
@@ -194,6 +212,7 @@ impl Default for PatcherConfig {
                 create_grf: false,
             },
             messages: None,
+            custom_actions: None,
         }
     }
 }

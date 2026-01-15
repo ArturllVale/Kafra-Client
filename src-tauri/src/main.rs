@@ -6,10 +6,9 @@ mod patcher;
 
 use config::{load_config, PatcherConfig};
 use patcher::downloader::{download_patch, DownloadProgress};
-use patcher::patch_list::{fetch_patch_list, PatchInfo};
+use patcher::patch_list::fetch_patch_list;
 use patcher::thor_patcher::extract_thor_patch;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
 use tauri::{Manager, State};
@@ -404,11 +403,56 @@ fn launch_exe(exe_path: String) -> Result<CommandResult, String> {
 fn main() {
     // Load configuration
     let exe_path = std::env::current_exe().unwrap();
-    let config_path = exe_path.parent().unwrap().join("config.yml");
+    let mut config_path = exe_path.parent().unwrap().join("config.yml");
     
+    println!("[DEBUG] Executable path: {:?}", exe_path);
+    println!("[DEBUG] Initial config path: {:?}", config_path);
+    println!("[DEBUG] Config exists at initial path: {}", config_path.exists());
+    
+    #[cfg(debug_assertions)]
+    {
+        // In debug mode, try to read from the project root
+        // CWD is usually src-tauri, so we need to check the parent directory
+        if let Ok(cwd) = std::env::current_dir() {
+            println!("[DEBUG] Current working directory: {:?}", cwd);
+            
+            // First, check if config exists in CWD
+            let dev_path = cwd.join("config.yml");
+            println!("[DEBUG] Dev config path (cwd): {:?}", dev_path);
+            
+            if dev_path.exists() {
+                config_path = dev_path;
+                println!("[DEBUG] Using config from CWD: {:?}", config_path);
+            } else if let Some(parent) = cwd.parent() {
+                // Check parent directory (project root when CWD is src-tauri)
+                let root_path = parent.join("config.yml");
+                println!("[DEBUG] Dev config path (project root): {:?}", root_path);
+                
+                if root_path.exists() {
+                    config_path = root_path;
+                    println!("[DEBUG] Using config from project root: {:?}", config_path);
+                }
+            }
+        }
+    }
+
+    println!("[DEBUG] Final config path: {:?}", config_path);
+
     let config = if config_path.exists() {
-        load_config(&config_path).ok()
+        match load_config(&config_path) {
+            Ok(cfg) => {
+                println!("[DEBUG] Config loaded successfully!");
+                println!("[DEBUG] Window title: {}", cfg.window.title);
+                println!("[DEBUG] Window size: {}x{}", cfg.window.width, cfg.window.height);
+                Some(cfg)
+            }
+            Err(e) => {
+                println!("[ERROR] Failed to load config: {}", e);
+                Some(PatcherConfig::default())
+            }
+        }
     } else {
+        println!("[DEBUG] Config file not found, using defaults");
         Some(PatcherConfig::default())
     };
 
@@ -418,6 +462,33 @@ fn main() {
 
     tauri::Builder::default()
         .manage(app_state)
+        .setup(|app| {
+            let state = app.state::<AppState>();
+            let config_lock = state.config.lock().unwrap();
+
+            if let Some(config) = &*config_lock {
+                println!("[DEBUG] Setup: Applying window config...");
+                println!("[DEBUG] Setup: Title = {}", config.window.title);
+                println!("[DEBUG] Setup: Size = {}x{}", config.window.width, config.window.height);
+                
+                if let Some(window) = app.get_window("main") {
+                    println!("[DEBUG] Setup: Got main window, applying settings...");
+                    let _ = window.set_title(&config.window.title);
+                    let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+                        width: config.window.width,
+                        height: config.window.height,
+                    }));
+                    let _ = window.set_resizable(config.window.resizable);
+                    let _ = window.center();
+                    println!("[DEBUG] Setup: Window settings applied!");
+                } else {
+                    println!("[ERROR] Setup: Could not get main window!");
+                }
+            } else {
+                println!("[ERROR] Setup: No config in state!");
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             get_config,
             start_update,

@@ -87,7 +87,7 @@ pub fn extract_thor_patch(
     Ok(())
 }
 
-pub fn validate_thor_patch(thor_path: &str) -> Result<bool, String> {
+pub fn _validate_thor_patch(thor_path: &str) -> Result<bool, String> {
     if !Path::new(thor_path).exists() {
         return Err("File not found".to_string());
     }

@@ -62,6 +62,8 @@ export interface PatcherConfig {
     client: {
         default_grf_name: string;
         bgm?: string;
+        normal_grf?: string;
+        gray_grf?: string;
         sso_login?: boolean;
     };
     patching: {

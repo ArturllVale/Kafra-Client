@@ -11,7 +11,7 @@ interface TitleBarProps {
 
 export const TitleBar: React.FC<TitleBarProps> = ({ title, onMinimize, onClose, onSettings, isMuted, onToggleMute }) => {
     return (
-        <header className="drag-region flex items-center justify-between px-4 py-2 bg-slate-800/90 border-b border-slate-700/50 backdrop-blur-sm">
+        <header data-tauri-drag-region className="drag-region flex items-center justify-between px-4 py-2 bg-slate-800/90 border-b border-slate-700/50 backdrop-blur-sm">
             <div className="flex items-center gap-3">
                 <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center font-bold text-xs shadow-lg shadow-blue-500/30">
                     R

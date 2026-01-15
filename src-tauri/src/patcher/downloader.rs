@@ -86,7 +86,7 @@ where
     Ok(())
 }
 
-pub async fn download_with_retry<F>(
+pub async fn _download_with_retry<F>(
     url: &str,
     dest_path: &str,
     on_progress: F,
@@ -114,7 +114,7 @@ where
     Err(format!("Download failed after {} retries: {}", max_retries, last_error))
 }
 
-pub fn format_bytes(bytes: u64) -> String {
+pub fn _format_bytes(bytes: u64) -> String {
     if bytes == 0 {
         return "0 B".to_string();
     }
@@ -127,6 +127,6 @@ pub fn format_bytes(bytes: u64) -> String {
     format!("{:.2} {}", bytes as f64 / K.powi(i as i32), sizes[i])
 }
 
-pub fn format_speed(bytes_per_second: f64) -> String {
-    format!("{}/s", format_bytes(bytes_per_second as u64))
+pub fn _format_speed(bytes_per_second: f64) -> String {
+    format!("{}/s", _format_bytes(bytes_per_second as u64))
 }

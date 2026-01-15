@@ -41,11 +41,11 @@ impl GrfReader {
         let real_file_count = raw_file_count - seed - 7;
 
         Ok(GrfHeader {
-            signature,
-            key,
+            _signature: signature,
+            _key: key,
             file_table_offset,
             real_file_count,
-            version: 0x200,
+            _version: 0x200,
         })
     }
 
@@ -116,8 +116,8 @@ impl GrfReader {
                     real_size: entry_real_size,
                     flags: entry_flags,
                     offset: entry_offset,
-                    is_new: false,
-                    data: None,
+                    _is_new: false,
+                    _data: None,
                 },
             );
 

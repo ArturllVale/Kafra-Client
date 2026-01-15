@@ -3,7 +3,7 @@
 
 # Configurações da Janela
 window:
-  title: "Kafra Client"          # Título que aparece na barra superior da janela
+  title: "Kafra Cliente 2026"          # Título que aparece na barra superior da janela
   width: 900                     # Largura da janela em pixels
   height: 800                    # Altura da janela em pixels
   resizable: false               # Define se o usuário pode redimensionar a janela (true/false)
