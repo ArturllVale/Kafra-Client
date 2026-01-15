@@ -1,21 +1,23 @@
-import { app, BrowserWindow, ipcMain, dialog, shell } from "electron";
-import { spawn } from "child_process";
-import path$1 from "path";
-import fs$1 from "fs";
-import require$$0$3, { fileURLToPath } from "url";
-import require$$0$1 from "process";
-import require$$0$2 from "buffer";
-import require$$1 from "util";
-import stream, { Readable } from "stream";
-import require$$3 from "http";
-import require$$4 from "https";
-import require$$8 from "crypto";
-import http2 from "http2";
-import require$$4$1 from "assert";
-import require$$1$1 from "tty";
-import require$$0$4 from "os";
-import zlib from "zlib";
-import { EventEmitter } from "events";
+"use strict";
+const electron = require("electron");
+const child_process = require("child_process");
+const path$1 = require("path");
+const fs$1 = require("fs");
+const require$$0$3 = require("url");
+const require$$0$1 = require("process");
+const require$$0$2 = require("buffer");
+const require$$1 = require("util");
+const stream = require("stream");
+const require$$3 = require("http");
+const require$$4 = require("https");
+const require$$8 = require("crypto");
+const http2 = require("http2");
+const require$$4$1 = require("assert");
+const require$$1$1 = require("tty");
+const require$$0$4 = require("os");
+const zlib = require("zlib");
+const events$1 = require("events");
+var _documentCurrentScript = typeof document !== "undefined" ? document.currentScript : null;
 function getDefaultExportFromCjs(x) {
   return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, "default") ? x["default"] : x;
 }
@@ -21930,7 +21932,7 @@ const formDataToStream = (form, headersHandler, options) => {
     computedHeaders["Content-Length"] = contentLength;
   }
   headersHandler && headersHandler(computedHeaders);
-  return Readable.from(async function* () {
+  return stream.Readable.from(async function* () {
     for (const part of parts) {
       yield boundaryBytes;
       yield* part.encode();
@@ -22335,7 +22337,7 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter2(config2) {
         });
       };
     }
-    const abortEmitter = new EventEmitter();
+    const abortEmitter = new events$1.EventEmitter();
     function abort2(reason) {
       try {
         abortEmitter.emit("abort", !reason || reason.type ? new CanceledError$1(null, config2, req) : reason);
@@ -26601,13 +26603,15 @@ async function extractThorPatch(thorPath, targetDir, defaultGrfName) {
     }
   }
 }
-const __filename$1 = fileURLToPath(import.meta.url);
+const __filename$1 = require$$0$3.fileURLToPath(typeof document === "undefined" ? require("url").pathToFileURL(__filename).href : _documentCurrentScript && _documentCurrentScript.tagName.toUpperCase() === "SCRIPT" && _documentCurrentScript.src || new URL("main.js", document.baseURI).href);
 const __dirname$1 = path$1.dirname(__filename$1);
 let mainWindow = null;
 let config = null;
 function createWindow() {
+  const preloadPath = path$1.join(__dirname$1, "preload.js");
+  console.log("Preload path:", preloadPath);
   const windowConfig = (config == null ? void 0 : config.window) || { width: 900, height: 600, resizable: false };
-  mainWindow = new BrowserWindow({
+  mainWindow = new electron.BrowserWindow({
     width: windowConfig.width,
     height: windowConfig.height,
     frame: false,
@@ -26615,29 +26619,36 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path$1.join(__dirname$1, "preload.js")
+      preload: preloadPath
     },
     backgroundColor: "#0f172a",
     icon: path$1.join(__dirname$1, "../public/icon.ico"),
-    title: windowConfig.title || "RPatchur"
+    title: windowConfig.title || "Kafra Client"
   });
-  if (process.env.NODE_ENV === "development" || !app.isPackaged) {
+  if (process.env.NODE_ENV === "development" || !electron.app.isPackaged) {
     mainWindow.loadURL("http://localhost:5173");
     mainWindow.webContents.openDevTools({ mode: "detach" });
   } else {
     mainWindow.loadFile(path$1.join(__dirname$1, "../dist/index.html"));
   }
+  mainWindow.on("minimize", () => {
+    mainWindow == null ? void 0 : mainWindow.webContents.send("window-minimized");
+  });
+  mainWindow.on("restore", () => {
+    mainWindow == null ? void 0 : mainWindow.webContents.send("window-restored");
+  });
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
 }
+electron.app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
 function setupIpcHandlers() {
-  ipcMain.on("window-minimize", () => mainWindow == null ? void 0 : mainWindow.minimize());
-  ipcMain.on("window-close", () => mainWindow == null ? void 0 : mainWindow.close());
-  ipcMain.handle("get-config", () => {
+  electron.ipcMain.on("window-minimize", () => mainWindow == null ? void 0 : mainWindow.minimize());
+  electron.ipcMain.on("window-close", () => mainWindow == null ? void 0 : mainWindow.close());
+  electron.ipcMain.handle("get-config", () => {
     return config;
   });
-  ipcMain.handle("start-update", async () => {
+  electron.ipcMain.handle("start-update", async () => {
     var _a;
     if (!config) {
       return { success: false, error: "No configuration loaded" };
@@ -26656,7 +26667,7 @@ function setupIpcHandlers() {
       for (let i = 0; i < patches.length; i++) {
         const patch = patches[i];
         const patchUrl = `${patchServer.patch_url}/${patch.filename}`;
-        const tempPath = path$1.join(app.getPath("temp"), patch.filename);
+        const tempPath = path$1.join(electron.app.getPath("temp"), patch.filename);
         mainWindow == null ? void 0 : mainWindow.webContents.send("patching-status", {
           status: "downloading",
           current: i + 1,
@@ -26672,7 +26683,7 @@ function setupIpcHandlers() {
           total: patches.length,
           filename: patch.filename
         });
-        const targetDir = path$1.dirname(app.getPath("exe"));
+        const targetDir = path$1.dirname(electron.app.getPath("exe"));
         await extractThorPatch(tempPath, targetDir, ((_a = config.client) == null ? void 0 : _a.default_grf_name) || "data.grf");
         try {
           fs$1.unlinkSync(tempPath);
@@ -26687,75 +26698,75 @@ function setupIpcHandlers() {
       return { success: false, error: errorMsg };
     }
   });
-  ipcMain.on("cancel-update", () => {
+  electron.ipcMain.on("cancel-update", () => {
     mainWindow == null ? void 0 : mainWindow.webContents.send("patching-status", { status: "idle" });
   });
-  ipcMain.handle("launch-game", async () => {
+  electron.ipcMain.handle("launch-game", async () => {
     var _a;
     if (!((_a = config == null ? void 0 : config.play) == null ? void 0 : _a.path)) {
       return { success: false, error: "Game path not configured" };
     }
     try {
-      const gamePath = path$1.resolve(path$1.dirname(app.getPath("exe")), config.play.path);
+      const gamePath = path$1.resolve(path$1.dirname(electron.app.getPath("exe")), config.play.path);
       const args = config.play.arguments || [];
-      spawn(gamePath, args, {
+      child_process.spawn(gamePath, args, {
         detached: true,
         stdio: "ignore",
         cwd: path$1.dirname(gamePath)
       }).unref();
       if (config.play.exit_on_success !== false) {
-        app.quit();
+        electron.app.quit();
       }
       return { success: true };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : "Failed to launch game" };
     }
   });
-  ipcMain.handle("launch-setup", async () => {
+  electron.ipcMain.handle("launch-setup", async () => {
     var _a;
     if (!((_a = config == null ? void 0 : config.setup) == null ? void 0 : _a.path)) {
       return { success: false, error: "Setup path not configured" };
     }
     try {
-      const setupPath = path$1.resolve(path$1.dirname(app.getPath("exe")), config.setup.path);
+      const setupPath = path$1.resolve(path$1.dirname(electron.app.getPath("exe")), config.setup.path);
       const args = config.setup.arguments || [];
-      spawn(setupPath, args, {
+      child_process.spawn(setupPath, args, {
         detached: true,
         stdio: "ignore",
         cwd: path$1.dirname(setupPath)
       }).unref();
       if (config.setup.exit_on_success === true) {
-        app.quit();
+        electron.app.quit();
       }
       return { success: true };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : "Failed to launch setup" };
     }
   });
-  ipcMain.handle("sso-login", async (_, credentials) => {
+  electron.ipcMain.handle("sso-login", async (_, credentials) => {
     var _a;
     if (!((_a = config == null ? void 0 : config.play) == null ? void 0 : _a.path)) {
       return { success: false, error: "Game path not configured" };
     }
     try {
-      const gamePath = path$1.resolve(path$1.dirname(app.getPath("exe")), config.play.path);
+      const gamePath = path$1.resolve(path$1.dirname(electron.app.getPath("exe")), config.play.path);
       const args = [...config.play.arguments || [], "-t", credentials.username, credentials.password];
-      spawn(gamePath, args, {
+      child_process.spawn(gamePath, args, {
         detached: true,
         stdio: "ignore",
         cwd: path$1.dirname(gamePath)
       }).unref();
       if (config.play.exit_on_success !== false) {
-        app.quit();
+        electron.app.quit();
       }
       return { success: true };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : "Failed to launch with SSO" };
     }
   });
-  ipcMain.handle("manual-patch", async () => {
+  electron.ipcMain.handle("manual-patch", async () => {
     var _a;
-    const result = await dialog.showOpenDialog(mainWindow, {
+    const result = await electron.dialog.showOpenDialog(mainWindow, {
       title: "Select THOR Patch File",
       filters: [{ name: "THOR Patches", extensions: ["thor"] }],
       properties: ["openFile"]
@@ -26768,7 +26779,7 @@ function setupIpcHandlers() {
         status: "patching",
         filename: path$1.basename(result.filePaths[0])
       });
-      const targetDir = path$1.dirname(app.getPath("exe"));
+      const targetDir = path$1.dirname(electron.app.getPath("exe"));
       await extractThorPatch(result.filePaths[0], targetDir, ((_a = config == null ? void 0 : config.client) == null ? void 0 : _a.default_grf_name) || "data.grf");
       mainWindow == null ? void 0 : mainWindow.webContents.send("patching-status", { status: "ready" });
       mainWindow == null ? void 0 : mainWindow.webContents.send("patch-applied", { filename: path$1.basename(result.filePaths[0]) });
@@ -26779,9 +26790,9 @@ function setupIpcHandlers() {
       return { success: false, error: errorMsg };
     }
   });
-  ipcMain.handle("reset-cache", async () => {
+  electron.ipcMain.handle("reset-cache", async () => {
     try {
-      const cachePath = path$1.join(app.getPath("userData"), "patch-cache.json");
+      const cachePath = path$1.join(electron.app.getPath("userData"), "patch-cache.json");
       if (fs$1.existsSync(cachePath)) {
         fs$1.unlinkSync(cachePath);
       }
@@ -26790,12 +26801,12 @@ function setupIpcHandlers() {
       return { success: false, error: error instanceof Error ? error.message : "Failed to reset cache" };
     }
   });
-  ipcMain.on("open-external", (_, url2) => {
-    shell.openExternal(url2);
+  electron.ipcMain.on("open-external", (_, url2) => {
+    electron.shell.openExternal(url2);
   });
-  ipcMain.handle("toggle-grf", async (_, { normal, gray }) => {
+  electron.ipcMain.handle("toggle-grf", async (_, { normal, gray }) => {
     try {
-      const dataIniPath = path$1.resolve(path$1.dirname(app.getPath("exe")), "data.ini");
+      const dataIniPath = path$1.resolve(path$1.dirname(electron.app.getPath("exe")), "data.ini");
       let content = "";
       if (fs$1.existsSync(dataIniPath)) {
         content = fs$1.readFileSync(dataIniPath, "utf-8");
@@ -26811,13 +26822,13 @@ function setupIpcHandlers() {
       return { success: false, error: error instanceof Error ? error.message : "Failed to toggle GRF" };
     }
   });
-  ipcMain.handle("launch-exe", async (_, exePath) => {
+  electron.ipcMain.handle("launch-exe", async (_, exePath) => {
     try {
-      const fullPath = path$1.resolve(path$1.dirname(app.getPath("exe")), exePath);
+      const fullPath = path$1.resolve(path$1.dirname(electron.app.getPath("exe")), exePath);
       if (!fs$1.existsSync(fullPath)) {
         throw new Error(`File not found: ${exePath}`);
       }
-      spawn(fullPath, [], {
+      child_process.spawn(fullPath, [], {
         detached: true,
         stdio: "ignore",
         cwd: path$1.dirname(fullPath)
@@ -26828,8 +26839,8 @@ function setupIpcHandlers() {
     }
   });
 }
-app.whenReady().then(async () => {
-  const configPath = path$1.join(path$1.dirname(app.getPath("exe")), "rpatchur.yml");
+electron.app.whenReady().then(async () => {
+  const configPath = path$1.join(path$1.dirname(electron.app.getPath("exe")), "rpatchur.yml");
   const devConfigPath = path$1.join(__dirname$1, "../rpatchur.yml");
   try {
     if (fs$1.existsSync(configPath)) {
@@ -26851,13 +26862,13 @@ app.whenReady().then(async () => {
   setupIpcHandlers();
   createWindow();
 });
-app.on("window-all-closed", () => {
+electron.app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
-    app.quit();
+    electron.app.quit();
   }
 });
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
+electron.app.on("activate", () => {
+  if (electron.BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
 });

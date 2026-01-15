@@ -16,6 +16,10 @@ let mainWindow: BrowserWindow | null = null;
 let config: PatcherConfig | null = null;
 
 function createWindow() {
+    // Determine preload path robustly
+    const preloadPath = path.join(__dirname, 'preload.js');
+    console.log('Preload path:', preloadPath); // Debug log
+
     const windowConfig = config?.window || { width: 900, height: 600, resizable: false };
 
     mainWindow = new BrowserWindow({
@@ -26,11 +30,11 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            preload: path.join(__dirname, 'preload.js')
+            preload: preloadPath
         },
         backgroundColor: '#0f172a',
         icon: path.join(__dirname, '../public/icon.ico'),
-        title: windowConfig.title || 'RPatchur'
+        title: windowConfig.title || 'Kafra Client'
     });
 
     // Development vs Production URL
@@ -41,10 +45,22 @@ function createWindow() {
         mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
     }
 
+    // Window state events for music control
+    mainWindow.on('minimize', () => {
+        mainWindow?.webContents.send('window-minimized');
+    });
+
+    mainWindow.on('restore', () => {
+        mainWindow?.webContents.send('window-restored');
+    });
+
     mainWindow.on('closed', () => {
         mainWindow = null;
     });
 }
+
+// Enable autoplay without user interaction
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
 // IPC Handlers
 function setupIpcHandlers() {

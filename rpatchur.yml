@@ -35,6 +35,7 @@ web:
 # Client settings
 client:
   default_grf_name: "data.grf"
+  bgm: "bgm.mp3"
   # New options for data.ini toggle
   normal_grf: "adata.grf"
   gray_grf: "sdata.grf"

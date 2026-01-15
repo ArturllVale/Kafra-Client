@@ -29,6 +29,8 @@ export interface PatcherAPI {
     onPatchingStatus: (callback: (data: PatchingStatus) => void) => () => void;
     onDownloadProgress: (callback: (data: DownloadProgress) => void) => () => void;
     onPatchApplied: (callback: (data: { filename: string }) => void) => () => void;
+    onWindowMinimized: (callback: () => void) => () => void;
+    onWindowRestored: (callback: () => void) => () => void;
 }
 
 export interface PatcherConfig {
@@ -59,6 +61,7 @@ export interface PatcherConfig {
     };
     client: {
         default_grf_name: string;
+        bgm?: string;
     };
     patching: {
         in_place: boolean;

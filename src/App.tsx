@@ -19,28 +19,61 @@ const App: React.FC = () => {
 
     // Music setup
     useEffect(() => {
-        audio.src = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'; // Placeholder
+        const bgmFile = config?.client?.bgm || 'bgm.mp3';
+        audio.src = `/${bgmFile}`;
         audio.loop = true;
         audio.volume = 0.3;
 
-        // Autoplay music if possible
-        const playMusic = () => {
-            audio.play().catch(() => {
-                // Autoplay might be blocked until user interaction
-                console.log("Autoplay blocked");
-            });
-            window.removeEventListener('click', playMusic);
+        // Force play immediately (Electron autoplay policy allows this now)
+        const startMusic = async () => {
+            try {
+                await audio.play();
+            } catch (e) {
+                console.warn("Autoplay blocked/failed, waiting for interaction", e);
+                const playOnClick = () => {
+                    audio.play().catch(console.error);
+                    window.removeEventListener('click', playOnClick);
+                };
+                window.addEventListener('click', playOnClick);
+            }
         };
-        window.addEventListener('click', playMusic);
+        startMusic();
+
+        // Pause/Resume on window events
+        let cleanupMinimize: (() => void) | undefined;
+        let cleanupRestore: (() => void) | undefined;
+
+        if (isElectron) {
+            cleanupMinimize = window.patcher.onWindowMinimized(() => {
+                console.log("Window minimized, pausing music");
+                audio.pause();
+            });
+
+            cleanupRestore = window.patcher.onWindowRestored(() => {
+                console.log("Window restored, resuming music");
+                // Resume play, the mute effect will pause it immediately if needed
+                audio.play().catch(console.error);
+            });
+        }
 
         return () => {
             audio.pause();
-            window.removeEventListener('click', playMusic);
+            cleanupMinimize?.();
+            cleanupRestore?.();
         };
-    }, [audio]);
+    }, [audio, config]); // Removed isMuted from dependencies to prevent reload
 
+    // Handle Mute/Unmute (Pause/Play)
     useEffect(() => {
-        audio.muted = isMuted;
+        if (isMuted) {
+            audio.pause();
+        } else {
+            // Only resume if we are not minimized (hard to check without extra state, but generally safe)
+            // If the audio source is set, we can try playing
+            if (audio.src) {
+                audio.play().catch(console.error);
+            }
+        }
     }, [isMuted, audio]);
 
     // Load configuration on mount
@@ -232,12 +265,16 @@ const App: React.FC = () => {
     const handleMinimize = useCallback(() => {
         if (isElectron) {
             window.patcher.minimize();
+        } else {
+            console.log('Minimize (Mock)');
         }
     }, []);
 
     const handleClose = useCallback(() => {
         if (isElectron) {
             window.patcher.close();
+        } else {
+            alert('Close (Mock): In production this closes the window.');
         }
     }, []);
 

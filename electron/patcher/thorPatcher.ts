@@ -1,12 +1,10 @@
 import AdmZip from 'adm-zip';
 import fs from 'fs';
 import path from 'path';
+import { GrfReader, GrfWriter } from './grf';
 
 /**
- * THOR patch file structure:
- * THOR files are ZIP archives with a specific structure containing:
- * - data/ folder for loose files to extract
- * - Files to be added to GRF (we extract to file system in this implementation)
+ * THOR patch file structure extraction and GRF merging.
  */
 export async function extractThorPatch(
     thorPath: string,
@@ -20,39 +18,73 @@ export async function extractThorPatch(
     const zip = new AdmZip(thorPath);
     const entries = zip.getEntries();
 
+    // Files destined for GRF
+    const grfFiles = new Map<string, Buffer>();
+    // Files destined for Disk
+    const diskFiles: AdmZip.IZipEntry[] = [];
+
+    const grfPath = path.join(targetDir, defaultGrfName);
+    // Check if we should patch GRF (exists and we have files for it)
+    // For now, let's always try to patch GRF if files are in 'data/' and GRF exists.
+    // Otherwise fallback to disk extraction (folders).
+    const useGrf = fs.existsSync(grfPath);
+
     for (const entry of entries) {
-        if (entry.isDirectory) {
-            continue;
-        }
+        if (entry.isDirectory) continue;
 
-        const entryName = entry.entryName;
-        let targetPath: string;
+        const entryName = entry.entryName; // e.g. "data/xml/iteminfo.lua"
 
-        // Determine target path based on file structure
-        if (entryName.startsWith('data/')) {
-            // Loose files go to the game directory
-            targetPath = path.join(targetDir, entryName);
-        } else if (entryName.includes('/')) {
-            // Other paths are extracted as-is
-            targetPath = path.join(targetDir, entryName);
+        // Check filtering logic
+        // Usually only 'data/' folder content goes to GRF
+        // Root files (updater.exe, dlls) go to disk
+        // normalize path separators
+        const normalized = entryName.replace(/\\/g, '/');
+
+        if (useGrf && (normalized.startsWith('data/') || normalized.startsWith('data\\'))) {
+            // Add to GRF batch
+            // Note: entryName in GRF usually keeps 'data\...' prefix or relative?
+            // Standard RO GRF contains paths like "data\texture\..."
+            // So we keep the full path.
+            grfFiles.set(normalized, entry.getData());
         } else {
-            // Root files go to target directory
-            targetPath = path.join(targetDir, entryName);
+            diskFiles.push(entry);
         }
+    }
 
-        // Create directory if needed
+    // 1. Process Disk Files
+    for (const entry of diskFiles) {
+        const entryName = entry.entryName;
+        // Logic for disk extraction
+        const targetPath = path.join(targetDir, entryName);
         const targetDirPath = path.dirname(targetPath);
+
         if (!fs.existsSync(targetDirPath)) {
             fs.mkdirSync(targetDirPath, { recursive: true });
         }
 
-        // Extract file
+        const content = entry.getData();
+        fs.writeFileSync(targetPath, content);
+    }
+
+    // 2. Process GRF Files
+    if (grfFiles.size > 0) {
+        console.log(`Patching ${grfFiles.size} files into ${defaultGrfName}...`);
+
+        // GRF Logic
+        const reader = new GrfReader(grfPath);
+        const writer = new GrfWriter();
+
         try {
-            const content = entry.getData();
-            fs.writeFileSync(targetPath, content);
+            const header = reader.readHeader();
+            const table = await reader.readFileTable(header);
+            reader.close(); // Close read handle before writing
+
+            await writer.quickMerge(grfPath, header, table, grfFiles, new Set());
         } catch (error) {
-            console.error(`Failed to extract ${entryName}:`, error);
-            throw new Error(`Failed to extract ${entryName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            console.error('Failed to patch GRF:', error);
+            // Fallback: extract to disk if GRF fails?
+            // Or throw error. Since user approved Native Patching, error is better to alert integrity issues.
+            throw new Error(`Failed to patch GRF ${defaultGrfName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
 }

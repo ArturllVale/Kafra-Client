@@ -1,5 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
+console.log('Preload script loaded successfully');
+
 // Expose protected methods that allow the renderer process to use
 // ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld('patcher', {
@@ -53,6 +55,18 @@ contextBridge.exposeInMainWorld('patcher', {
         const listener = (_: any, data: { filename: string }) => callback(data);
         ipcRenderer.on('patch-applied', listener);
         return () => ipcRenderer.removeListener('patch-applied', listener);
+    },
+
+    onWindowMinimized: (callback: () => void) => {
+        const listener = () => callback();
+        ipcRenderer.on('window-minimized', listener);
+        return () => ipcRenderer.removeListener('window-minimized', listener);
+    },
+
+    onWindowRestored: (callback: () => void) => {
+        const listener = () => callback();
+        ipcRenderer.on('window-restored', listener);
+        return () => ipcRenderer.removeListener('window-restored', listener);
     }
 });
 
