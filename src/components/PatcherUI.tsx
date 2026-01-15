@@ -102,7 +102,7 @@ export const PatcherUI: React.FC<PatcherUIProps> = ({
                             </svg>
                             Latest News
                         </h3>
-                        <div className="overflow-y-auto custom-scrollbar space-y-3 pr-2 max-h-32">
+                        <div className="custom-scrollbar space-y-3 pr-2 max-h-32">
                             <NewsItem
                                 title="Patcher Updated"
                                 date="2024-01-15"

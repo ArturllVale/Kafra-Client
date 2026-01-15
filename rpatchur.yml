@@ -5,7 +5,7 @@
 window:
   title: "Kafra Client"
   width: 900
-  height: 600
+  height: 800
   resizable: false
 
 # Play button configuration

@@ -1,4 +1,7 @@
 "use strict";
+var __defProp = Object.defineProperty;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 const electron = require("electron");
 const child_process = require("child_process");
 const path$1 = require("path");
@@ -20732,7 +20735,7 @@ var hasRequiredBrowser;
 function requireBrowser() {
   if (hasRequiredBrowser) return browser.exports;
   hasRequiredBrowser = 1;
-  (function(module, exports$1) {
+  (function(module2, exports$1) {
     exports$1.formatArgs = formatArgs;
     exports$1.save = save;
     exports$1.load = load;
@@ -20840,7 +20843,7 @@ function requireBrowser() {
       typeof navigator !== "undefined" && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/);
     }
     function formatArgs(args) {
-      args[0] = (this.useColors ? "%c" : "") + this.namespace + (this.useColors ? " %c" : " ") + args[0] + (this.useColors ? "%c " : " ") + "+" + module.exports.humanize(this.diff);
+      args[0] = (this.useColors ? "%c" : "") + this.namespace + (this.useColors ? " %c" : " ") + args[0] + (this.useColors ? "%c " : " ") + "+" + module2.exports.humanize(this.diff);
       if (!this.useColors) {
         return;
       }
@@ -20888,8 +20891,8 @@ function requireBrowser() {
       } catch (error) {
       }
     }
-    module.exports = requireCommon()(exports$1);
-    const { formatters } = module.exports;
+    module2.exports = requireCommon()(exports$1);
+    const { formatters } = module2.exports;
     formatters.j = function(v) {
       try {
         return JSON.stringify(v);
@@ -21020,7 +21023,7 @@ var hasRequiredNode;
 function requireNode() {
   if (hasRequiredNode) return node.exports;
   hasRequiredNode = 1;
-  (function(module, exports$1) {
+  (function(module2, exports$1) {
     const tty = require$$1$1;
     const util2 = require$$1;
     exports$1.init = init;
@@ -21148,7 +21151,7 @@ function requireNode() {
         const colorCode = "\x1B[3" + (c < 8 ? c : "8;5;" + c);
         const prefix = `  ${colorCode};1m${name} \x1B[0m`;
         args[0] = prefix + args[0].split("\n").join("\n" + prefix);
-        args.push(colorCode + "m+" + module.exports.humanize(this.diff) + "\x1B[0m");
+        args.push(colorCode + "m+" + module2.exports.humanize(this.diff) + "\x1B[0m");
       } else {
         args[0] = getDate() + name + " " + args[0];
       }
@@ -21179,8 +21182,8 @@ function requireNode() {
         debug2.inspectOpts[keys[i]] = exports$1.inspectOpts[keys[i]];
       }
     }
-    module.exports = requireCommon()(exports$1);
-    const { formatters } = module.exports;
+    module2.exports = requireCommon()(exports$1);
+    const { formatters } = module2.exports;
     formatters.o = function(v) {
       this.inspectOpts.colors = this.useColors;
       return util2.inspect(v, this.inspectOpts).split("\n").map((str) => str.trim()).join(" ");
@@ -26571,35 +26574,240 @@ var admZip = function(input, options) {
   };
 };
 const AdmZip = /* @__PURE__ */ getDefaultExportFromCjs(admZip);
+const GRF_HEADER_SIZE = 46;
+const GRF_SIGNATURE = "Master of Magic";
+var GrfFlags = /* @__PURE__ */ ((GrfFlags2) => {
+  GrfFlags2[GrfFlags2["File"] = 1] = "File";
+  GrfFlags2[GrfFlags2["MixedCrypt"] = 2] = "MixedCrypt";
+  GrfFlags2[GrfFlags2["DesCrypt"] = 4] = "DesCrypt";
+  return GrfFlags2;
+})(GrfFlags || {});
+class GrfReader {
+  constructor(filePath) {
+    __publicField(this, "filePath");
+    __publicField(this, "descriptor", null);
+    this.filePath = filePath;
+  }
+  close() {
+    if (this.descriptor !== null) {
+      fs$1.closeSync(this.descriptor);
+      this.descriptor = null;
+    }
+  }
+  open() {
+    if (!fs$1.existsSync(this.filePath)) {
+      throw new Error(`GRF file not found: ${this.filePath}`);
+    }
+    this.descriptor = fs$1.openSync(this.filePath, "r");
+  }
+  readHeader() {
+    if (this.descriptor === null) this.open();
+    const buffer = Buffer.alloc(GRF_HEADER_SIZE);
+    fs$1.readSync(this.descriptor, buffer, 0, GRF_HEADER_SIZE, 0);
+    const signature = buffer.toString("latin1", 0, 15);
+    if (signature !== GRF_SIGNATURE) {
+      throw new Error("Invalid GRF signature");
+    }
+    const key = buffer.subarray(15, 29);
+    const fileTableOffset = Number(buffer.readBigUInt64LE(30));
+    const seed = buffer.readInt32LE(38);
+    const rawFileCount = buffer.readInt32LE(42);
+    const realFileCount = rawFileCount - seed - 7;
+    const version2 = 512;
+    return {
+      signature,
+      key,
+      fileTableOffset,
+      realFileCount,
+      version: version2
+    };
+  }
+  async readFileTable(header) {
+    if (this.descriptor === null) this.open();
+    const tableInfoBuffer = Buffer.alloc(8);
+    const absoluteTableOffset = header.fileTableOffset + GRF_HEADER_SIZE;
+    fs$1.readSync(this.descriptor, tableInfoBuffer, 0, 8, absoluteTableOffset);
+    const compressedSize = tableInfoBuffer.readInt32LE(0);
+    const realSize = tableInfoBuffer.readInt32LE(4);
+    const compressedData = Buffer.alloc(compressedSize);
+    fs$1.readSync(this.descriptor, compressedData, 0, compressedSize, absoluteTableOffset + 8);
+    const data = zlib.unzipSync(compressedData);
+    if (data.length !== realSize) {
+      console.warn(`Warning: Decompressed table size mismatch. Expected ${realSize}, got ${data.length}`);
+    }
+    const entries = /* @__PURE__ */ new Map();
+    let offset = 0;
+    let fileCount = 0;
+    while (offset < data.length && fileCount < header.realFileCount) {
+      let endName = offset;
+      while (endName < data.length && data[endName] !== 0) {
+        endName++;
+      }
+      const filename = data.toString("latin1", offset, endName);
+      offset = endName + 1;
+      const entryCompressedSize = data.readInt32LE(offset);
+      offset += 4;
+      const entryCompressedSizeAligned = data.readInt32LE(offset);
+      offset += 4;
+      const entryRealSize = data.readInt32LE(offset);
+      offset += 4;
+      const entryFlags = data.readUInt8(offset);
+      offset += 1;
+      const entryOffset = data.readInt32LE(offset);
+      offset += 4;
+      entries.set(filename.toLowerCase(), {
+        filename,
+        compressedSize: entryCompressedSize,
+        compressedSizeAligned: entryCompressedSizeAligned,
+        realSize: entryRealSize,
+        flags: entryFlags,
+        offset: entryOffset
+      });
+      fileCount++;
+    }
+    return entries;
+  }
+}
+class GrfWriter {
+  /**
+   * Applies changes to a GRF file using the QuickMerge strategy.
+   * Overwrites the previous file table with new file data, then appends a new table.
+   */
+  async quickMerge(filePath, existingHeader, existingTable, newFiles, filesToRemove) {
+    let appendOffset = existingHeader.fileTableOffset + GRF_HEADER_SIZE;
+    const fd = fs$1.openSync(filePath, "r+");
+    try {
+      for (const file of filesToRemove) {
+        existingTable.delete(file.toLowerCase());
+      }
+      fs$1.closeSync(fd);
+      const writeFd = fs$1.openSync(filePath, "r+");
+      let currentOffset = appendOffset;
+      for (const [filename, content] of newFiles) {
+        const compressed = zlib.deflateSync(content);
+        const realSize = content.length;
+        const compressedSize = compressed.length;
+        const alignedSize = compressedSize + 7 & ~7;
+        const padding = alignedSize - compressedSize;
+        const writeBuffer = Buffer.alloc(alignedSize);
+        compressed.copy(writeBuffer);
+        fs$1.writeSync(writeFd, writeBuffer, 0, alignedSize, currentOffset);
+        const entryOffset = currentOffset - GRF_HEADER_SIZE;
+        existingTable.set(filename.toLowerCase(), {
+          filename,
+          compressedSize,
+          compressedSizeAligned: alignedSize,
+          realSize,
+          flags: GrfFlags.File,
+          offset: entryOffset
+        });
+        currentOffset += alignedSize;
+      }
+      const entriesBuffer = this.serializeFileTable(existingTable);
+      const compressedTable = zlib.deflateSync(entriesBuffer);
+      const tableInfoHeader = Buffer.alloc(8);
+      tableInfoHeader.writeInt32LE(compressedTable.length, 0);
+      tableInfoHeader.writeInt32LE(entriesBuffer.length, 4);
+      fs$1.writeSync(writeFd, tableInfoHeader, 0, 8, currentOffset);
+      fs$1.writeSync(writeFd, compressedTable, 0, compressedTable.length, currentOffset + 8);
+      const newTableOffset = currentOffset - GRF_HEADER_SIZE;
+      const finalFileSize = currentOffset + 8 + compressedTable.length;
+      const seed = 0;
+      const realFileCount = existingTable.size;
+      const rawFileCount = realFileCount + seed + 7;
+      const headerBuffer = Buffer.alloc(GRF_HEADER_SIZE);
+      headerBuffer.write(GRF_SIGNATURE, "latin1");
+      if (existingHeader.key) {
+        Buffer.from(existingHeader.key).copy(headerBuffer, 15);
+      } else {
+      }
+      const bigOffset = BigInt(newTableOffset);
+      headerBuffer.writeBigUInt64LE(bigOffset, 30);
+      headerBuffer.writeInt32LE(seed, 38);
+      headerBuffer.writeInt32LE(rawFileCount, 42);
+      fs$1.writeSync(writeFd, headerBuffer, 0, GRF_HEADER_SIZE, 0);
+      try {
+        fs$1.ftruncateSync(writeFd, finalFileSize);
+      } catch (e) {
+        console.warn("Failed to truncate file, size might be larger than needed", e);
+      }
+      fs$1.closeSync(writeFd);
+    } catch (error) {
+      try {
+        fs$1.closeSync(fd);
+      } catch {
+      }
+      throw error;
+    }
+  }
+  serializeFileTable(entries) {
+    const chunks = [];
+    let totalSize = 0;
+    for (const entry of entries.values()) {
+      const nameBuf = Buffer.from(entry.filename, "latin1");
+      const entryLen = nameBuf.length + 1 + 17;
+      const buf = Buffer.alloc(entryLen);
+      nameBuf.copy(buf, 0);
+      buf[nameBuf.length] = 0;
+      let pos = nameBuf.length + 1;
+      buf.writeInt32LE(entry.compressedSize, pos);
+      pos += 4;
+      buf.writeInt32LE(entry.compressedSizeAligned, pos);
+      pos += 4;
+      buf.writeInt32LE(entry.realSize, pos);
+      pos += 4;
+      buf.writeUInt8(entry.flags, pos);
+      pos += 1;
+      buf.writeInt32LE(entry.offset, pos);
+      pos += 4;
+      chunks.push(buf);
+      totalSize += entryLen;
+    }
+    return Buffer.concat(chunks, totalSize);
+  }
+}
 async function extractThorPatch(thorPath, targetDir, defaultGrfName) {
   if (!fs$1.existsSync(thorPath)) {
     throw new Error(`THOR patch file not found: ${thorPath}`);
   }
   const zip = new AdmZip(thorPath);
   const entries = zip.getEntries();
+  const grfFiles = /* @__PURE__ */ new Map();
+  const diskFiles = [];
+  const grfPath = path$1.join(targetDir, defaultGrfName);
+  const useGrf = fs$1.existsSync(grfPath);
   for (const entry of entries) {
-    if (entry.isDirectory) {
-      continue;
-    }
+    if (entry.isDirectory) continue;
     const entryName = entry.entryName;
-    let targetPath;
-    if (entryName.startsWith("data/")) {
-      targetPath = path$1.join(targetDir, entryName);
-    } else if (entryName.includes("/")) {
-      targetPath = path$1.join(targetDir, entryName);
+    const normalized = entryName.replace(/\\/g, "/");
+    if (useGrf && (normalized.startsWith("data/") || normalized.startsWith("data\\"))) {
+      grfFiles.set(normalized, entry.getData());
     } else {
-      targetPath = path$1.join(targetDir, entryName);
+      diskFiles.push(entry);
     }
+  }
+  for (const entry of diskFiles) {
+    const entryName = entry.entryName;
+    const targetPath = path$1.join(targetDir, entryName);
     const targetDirPath = path$1.dirname(targetPath);
     if (!fs$1.existsSync(targetDirPath)) {
       fs$1.mkdirSync(targetDirPath, { recursive: true });
     }
+    const content = entry.getData();
+    fs$1.writeFileSync(targetPath, content);
+  }
+  if (grfFiles.size > 0) {
+    console.log(`Patching ${grfFiles.size} files into ${defaultGrfName}...`);
+    const reader = new GrfReader(grfPath);
+    const writer = new GrfWriter();
     try {
-      const content = entry.getData();
-      fs$1.writeFileSync(targetPath, content);
+      const header = reader.readHeader();
+      const table = await reader.readFileTable(header);
+      reader.close();
+      await writer.quickMerge(grfPath, header, table, grfFiles, /* @__PURE__ */ new Set());
     } catch (error) {
-      console.error(`Failed to extract ${entryName}:`, error);
-      throw new Error(`Failed to extract ${entryName}: ${error instanceof Error ? error.message : "Unknown error"}`);
+      console.error("Failed to patch GRF:", error);
+      throw new Error(`Failed to patch GRF ${defaultGrfName}: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }
 }
