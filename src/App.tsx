@@ -49,20 +49,8 @@ const App: React.FC = () => {
         };
         startMusic();
 
-        // Pause/Resume on window events
-        let cleanupMinimize: (() => void) | undefined;
-        let cleanupRestore: (() => void) | undefined;
-
-        if (isTauri) {
-            // Window minimize/restore events are handled differently in Tauri
-            // We can listen to window events if needed, but for now we'll skip this
-            // as the music control is less critical
-        }
-
         return () => {
             audio.pause();
-            cleanupMinimize?.();
-            cleanupRestore?.();
         };
     }, [audio, config]);
 
@@ -77,6 +65,27 @@ const App: React.FC = () => {
                 audio.play().catch(console.error);
             }
         }
+    }, [isMuted, audio]);
+
+    // Handle visibility change (Pause on minimize)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                console.log('[DEBUG] Audio: Window hidden/minimized, pausing BGM');
+                audio.pause();
+            } else {
+                console.log('[DEBUG] Audio: Window visible/restored');
+                if (!isMuted && audio.src) {
+                    console.log('[DEBUG] Audio: Resuming BGM');
+                    audio.play().catch(e => console.warn('[DEBUG] Audio Resume failed:', e));
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, [isMuted, audio]);
 
     // Load configuration on mount
@@ -262,10 +271,7 @@ const App: React.FC = () => {
         }
 
         try {
-            const result = await invoke<{ success: boolean; is_gray?: boolean; error?: string }>('toggle_grf', {
-                normal: config?.client?.normal_grf || 'adata.grf',
-                gray: config?.client?.gray_grf || 'sdata.grf'
-            });
+            const result = await invoke<{ success: boolean; is_gray?: boolean; error?: string }>('toggle_grf');
 
             if (result.success) {
                 setIsGrayFloor(result.is_gray || false);
@@ -276,6 +282,33 @@ const App: React.FC = () => {
             setError(error);
         }
     }, [isGrayFloor]);
+
+    const handleLaunchExe = useCallback(async (exePath: string) => {
+        if (!isTauri) {
+            alert(`Would launch exe: ${exePath}`);
+            return;
+        }
+        try {
+            const result = await invoke<{ success: boolean; error?: string }>('launch_exe', { exePath });
+            if (!result.success && result.error) {
+                setError(result.error);
+            }
+        } catch (error: any) {
+            setError(error);
+        }
+    }, []);
+
+    const handleOpenExternal = useCallback(async (url: string) => {
+        if (!isTauri) {
+            window.open(url, '_blank');
+            return;
+        }
+        try {
+            await invoke('open_external', { url });
+        } catch (error: any) {
+            setError(error);
+        }
+    }, []);
 
     const handleMinimize = useCallback(async () => {
         if (isTauri) {
@@ -322,6 +355,8 @@ const App: React.FC = () => {
                     onToggleGrf={handleToggleGrf}
                     isSSOEnabled={config?.client?.sso_login ?? false}
                     config={config}
+                    onLaunchExe={handleLaunchExe}
+                    onOpenExternal={handleOpenExternal}
                 />
             </main>
 

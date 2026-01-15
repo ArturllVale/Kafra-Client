@@ -17,6 +17,8 @@ interface PatcherUIProps {
     onToggleGrf: () => void;
     isSSOEnabled: boolean;
     config: any; // Using any to avoid complex type drilling, or import PatcherConfig
+    onLaunchExe?: (path: string) => void;
+    onOpenExternal?: (url: string) => void;
 }
 
 export const PatcherUI: React.FC<PatcherUIProps> = ({
@@ -33,7 +35,9 @@ export const PatcherUI: React.FC<PatcherUIProps> = ({
     isGrayFloor,
     onToggleGrf,
     isSSOEnabled,
-    config
+    config,
+    onLaunchExe,
+    onOpenExternal
 }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -227,10 +231,10 @@ export const PatcherUI: React.FC<PatcherUIProps> = ({
                                 <button
                                     key={index}
                                     onClick={() => {
-                                        if (action.type === 'exe') {
-                                            window.patcher.launchExe(action.target);
-                                        } else if (action.type === 'link') {
-                                            window.patcher.openExternal(action.target);
+                                        if (action.type === 'exe' && onLaunchExe) {
+                                            onLaunchExe(action.target);
+                                        } else if (action.type === 'link' && onOpenExternal) {
+                                            onOpenExternal(action.target);
                                         }
                                     }}
                                     disabled={isPatching}

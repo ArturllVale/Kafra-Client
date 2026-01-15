@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 #[cfg(debug_assertions)]
 use std::path::Path;
+use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WindowConfig {
@@ -66,9 +67,9 @@ pub struct ClientConfig {
     #[serde(default)]
     pub bgm: Option<String>,
     #[serde(default)]
-    pub normal_grf: Option<String>,
+    pub normal_grf: Option<BTreeMap<u32, String>>,
     #[serde(default)]
-    pub gray_grf: Option<String>,
+    pub gray_grf: Option<BTreeMap<u32, String>>,
     #[serde(default)]
     pub sso_login: bool,
 }

@@ -41,8 +41,14 @@ client:
   
   # Opções para troca de Chão (data.ini)
   # O patcher vai alternar as GRFs no arquivo data.ini
-  normal_grf: "adata.grf"        # GRF com o chão normal
-  gray_grf: "sdata.grf"          # GRF com o chão cinza/pvp
+  normal_grf:
+    1: "adata.grf"
+    2: "sdata.grf"
+    3: "Graydata.grf"
+  gray_grf:
+    1: "Graydata.grf"
+    2: "sdata.grf"
+    3: "adata.grf"
   
   sso_login: false               # Ativa o formulário de login integrado (SSO)
 

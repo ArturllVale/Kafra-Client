@@ -346,32 +346,67 @@ fn open_external(url: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn toggle_grf(normal: String, gray: String) -> Result<ToggleResult, String> {
+fn toggle_grf(state: State<AppState>) -> Result<ToggleResult, String> {
+    let config = {
+        let config_lock = state.config.lock().unwrap();
+        config_lock.clone().ok_or_else(|| "No configuration loaded".to_string())?
+    };
+
+    let normal_grfs = config.client.normal_grf.ok_or("Normal GRFs not configured")?;
+    let gray_grfs = config.client.gray_grf.ok_or("Gray GRFs not configured")?;
+
     let exe_path = std::env::current_exe().map_err(|e| e.to_string())?;
     let data_ini_path = exe_path.parent()
         .ok_or("Failed to get directory")?
         .join("data.ini");
 
-    let content = if data_ini_path.exists() {
-        std::fs::read_to_string(&data_ini_path).unwrap_or_default()
+    // Read as bytes to handle potential non-UTF8 characters (common in legacy INI files)
+    let content_bytes = if data_ini_path.exists() {
+        std::fs::read(&data_ini_path).map_err(|e| format!("Failed to read data.ini: {}", e))?
     } else {
-        String::new()
+        Vec::new()
     };
+    let content = String::from_utf8_lossy(&content_bytes);
 
-    let is_gray_first = content.contains(&format!("0={}", gray));
+    // Determine current state by checking if the first entry of Gray GRFs is strictly present (key=value)
+    // We use the first key of Gray GRF config as the reference.
+    let (g_key, g_val) = gray_grfs.iter().next().ok_or("Gray GRF config empty")?;
     
-    let new_content = format!(
-        "[Data]\r\n0={}\r\n1={}\r\n",
-        if is_gray_first { &normal } else { &gray },
-        if is_gray_first { &gray } else { &normal }
-    );
+    // We search for "1=Graydata.grf" (example) to avoid ambiguity if names are shared
+    let search_marker = format!("{}={}", g_key, g_val);
+    let is_currently_gray = content.contains(&search_marker);
+
+    let target_grfs = if is_currently_gray { &normal_grfs } else { &gray_grfs };
+    
+    // Parse existing zero entry to preserve it
+    let mut zero_entry = None;
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with("0=") {
+             zero_entry = Some(trimmed.to_string());
+             break;
+        }
+    }
+
+    let mut new_content = String::from("[Data]\r\n");
+    
+    // Preserve 0 if it existed
+    if let Some(z) = zero_entry {
+        new_content.push_str(&format!("{}\r\n", z));
+    }
+    
+    for (index, filename) in target_grfs {
+        new_content.push_str(&format!("{}={}\r\n", index, filename));
+    }
 
     std::fs::write(&data_ini_path, new_content)
         .map_err(|e| format!("Failed to write data.ini: {}", e))?;
 
+
+
     Ok(ToggleResult {
         success: true,
-        is_gray: Some(!is_gray_first),
+        is_gray: Some(!is_currently_gray),
         error: None,
     })
 }
