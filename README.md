@@ -6,7 +6,7 @@
 ![Vite](https://img.shields.io/badge/Vite-5.3-646cff.svg)
 ![Tailwind](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg)
 
-Uma recriação moderna, performática e altamente customizável do clássico **RPatchur**, desenvolvida com tecnologias web de ponta. Este patcher foi projetado para substituir launchers antigos, oferecendo uma experiência premium para os jogadores e facilidade de configuração para os administradores.
+Uma recriação moderna, performática e altamente customizável do clássico **Kafra Client**, desenvolvida com tecnologias web de ponta. Este patcher foi projetado para substituir launchers antigos, oferecendo uma experiência premium para os jogadores e facilidade de configuração para os administradores.
 
 ## ✨ Funcionalidades Principais
 
@@ -14,7 +14,7 @@ Uma recriação moderna, performática e altamente customizável do clássico **
 - 🎨 **Interface Premium**: UI moderna com Tailwind CSS, frameless window, animações suaves e glassmorphism.
 - 📦 **Patching Nativo GRF**: Implementação do algoritmo **QuickMerge** para injetar arquivos diretamente no `data.grf` sem corrupção, mantendo a integridade do cliente.
 - 🎵 **Gerenciamento de Áudio**: BGM integrada com Autoplay inteligente, controle de Mute e pausa automática ao minimizar.
-- 🛠️ **Configuração Compatível**: Utiliza o formato `rpatchur.yml`, facilitando a migração de servidores existentes.
+- 🛠️ **Configuração Compatível**: Utiliza o formato `config.yml`, facilitando a migração de servidores existentes.
 - 🕹️ **Múltiplos Executáveis**: Suporte flexível para iniciar Jogo, Setup e ferramentas externas.
 - 🌗 **Gray Floor Toggle**: Funcionalidade nativa para alternar entre chão normal e cinza via edição automática do `data.ini`.
 - 🔐 **SSO Login**: Suporte a login único passando argumentos seguros para o cliente.
@@ -55,9 +55,9 @@ npm run build
 
 ---
 
-## ⚙️ Guia de Configuração (rpatchur.yml)
+## ⚙️ Guia de Configuração (config.yml)
 
-O coração do patcher é o arquivo `rpatchur.yml`. Ele deve ficar na mesma pasta do executável.
+O coração do patcher é o arquivo `config.yml`. Ele deve ficar na mesma pasta do executável.
 
 ### Estrutura Completa
 ```yaml

@@ -62,11 +62,51 @@ export interface PatcherConfig {
     client: {
         default_grf_name: string;
         bgm?: string;
+        sso_login?: boolean;
     };
     patching: {
         in_place: boolean;
         check_integrity: boolean;
         create_grf: boolean;
+    };
+    messages?: {
+        patching?: {
+            error_download?: string;
+            error_extract?: string;
+            error_generic?: string;
+        };
+        game?: {
+            launch_error?: string;
+        };
+        ui?: {
+            titles?: {
+                news?: string;
+                sso_login?: string;
+                server_status?: string;
+                actions?: string;
+            };
+            buttons?: {
+                login?: string;
+                setup?: string;
+                toggle_gray?: string;
+                toggle_normal?: string;
+                manual_patch?: string;
+                reset_cache?: string;
+                cancel?: string;
+                play?: string;
+                patching?: string;
+                wait?: string;
+                retry?: string;
+            };
+            status?: {
+                idle?: string;
+                checking?: string;
+                downloading?: string;
+                patching?: string;
+                ready?: string;
+                error?: string;
+            };
+        };
     };
 }
 

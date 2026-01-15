@@ -110,9 +110,14 @@ function setupIpcHandlers() {
                     filename: patch.filename
                 });
 
-                await downloadPatch(patchUrl, tempPath, (progress: DownloadProgress) => {
-                    mainWindow?.webContents.send('download-progress', progress);
-                });
+                try {
+                    await downloadPatch(patchUrl, tempPath, (progress: DownloadProgress) => {
+                        mainWindow?.webContents.send('download-progress', progress);
+                    });
+                } catch (e) {
+                    const msg = config?.messages?.patching?.error_download || 'Download failed';
+                    throw new Error(msg);
+                }
 
                 // Extract/Apply
                 mainWindow?.webContents.send('patching-status', {
@@ -123,7 +128,12 @@ function setupIpcHandlers() {
                 });
 
                 const targetDir = path.dirname(app.getPath('exe'));
-                await extractThorPatch(tempPath, targetDir, config.client?.default_grf_name || 'data.grf');
+                try {
+                    await extractThorPatch(tempPath, targetDir, config.client?.default_grf_name || 'data.grf');
+                } catch (e) {
+                    const msg = config?.messages?.patching?.error_extract || 'Extraction failed';
+                    throw new Error(msg);
+                }
 
                 // Cleanup temp file
                 try {
@@ -136,9 +146,18 @@ function setupIpcHandlers() {
             mainWindow?.webContents.send('patching-status', { status: 'ready' });
             return { success: true };
         } catch (error) {
+            // If the error message matches one of our custom ones, use it directly. 
+            // Otherwise, fallback to generic error (if configured) or the actual error message.
             const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-            mainWindow?.webContents.send('patching-status', { status: 'error', error: errorMsg });
-            return { success: false, error: errorMsg };
+
+            const isCustomError =
+                (config?.messages?.patching?.error_download && errorMsg === config.messages.patching.error_download) ||
+                (config?.messages?.patching?.error_extract && errorMsg === config.messages.patching.error_extract);
+
+            const finalError = isCustomError ? errorMsg : (config?.messages?.patching?.error_generic || errorMsg);
+
+            mainWindow?.webContents.send('patching-status', { status: 'error', error: finalError });
+            return { success: false, error: finalError };
         }
     });
 
@@ -170,7 +189,7 @@ function setupIpcHandlers() {
 
             return { success: true };
         } catch (error) {
-            return { success: false, error: error instanceof Error ? error.message : 'Failed to launch game' };
+            return { success: false, error: config.messages?.game?.launch_error || (error instanceof Error ? error.message : 'Failed to launch game') };
         }
     });
 
@@ -323,8 +342,8 @@ function setupIpcHandlers() {
 // App lifecycle
 app.whenReady().then(async () => {
     // Load configuration
-    const configPath = path.join(path.dirname(app.getPath('exe')), 'rpatchur.yml');
-    const devConfigPath = path.join(__dirname, '../rpatchur.yml');
+    const configPath = path.join(path.dirname(app.getPath('exe')), 'config.yml');
+    const devConfigPath = path.join(__dirname, '../config.yml');
 
     try {
         if (fs.existsSync(configPath)) {
@@ -334,7 +353,7 @@ app.whenReady().then(async () => {
         } else {
             // Use defaults
             config = {
-                window: { title: 'RPatchur', width: 900, height: 600, resizable: false },
+                window: { title: 'Kafra Client', width: 900, height: 600, resizable: false },
                 play: { path: 'ragnarok.exe', arguments: [], exit_on_success: true },
                 web: { index_url: '', patch_servers: [] },
                 client: { default_grf_name: 'data.grf' },

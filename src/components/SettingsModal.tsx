@@ -103,7 +103,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ config, onClose })
                 {/* Footer */}
                 <div className="px-6 py-4 bg-slate-900/50 border-t border-slate-700 flex justify-between items-center">
                     <p className="text-xs text-slate-500">
-                        Configuration is read from rpatchur.yml
+                        Configuration is read from config.yml
                     </p>
                     <button
                         onClick={onClose}

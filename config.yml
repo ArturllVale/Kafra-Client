@@ -1,0 +1,82 @@
+# Kafra Client Configuration File
+# This file configures the patcher's behavior
+
+# Window settings
+window:
+  title: "Kafra Client"
+  width: 900
+  height: 800
+  resizable: false
+
+# Play button configuration
+play:
+  path: "ragnarok.exe"
+  arguments: []
+  exit_on_success: true
+
+# Setup button configuration (optional)
+# setup:
+#   path: "setup.exe"
+#   arguments: []
+#   exit_on_success: false
+
+# Web/Patching configuration
+web:
+  index_url: ""
+  # preferred_patch_server: "Primary"
+  patch_servers:
+    - name: "Primary"
+      plist_url: "https://your-server.com/plist.txt"
+      patch_url: "https://your-server.com/patches"
+    # - name: "Mirror"
+    #   plist_url: "https://mirror.your-server.com/plist.txt"
+    #   patch_url: "https://mirror.your-server.com/patches"
+
+# Client settings
+client:
+  default_grf_name: "data.grf"
+  bgm: "bgm.mp3"
+  # New options for data.ini toggle
+  normal_grf: "adata.grf"
+  gray_grf: "sdata.grf"
+  sso_login: false # Set to true to enable SSO Login form
+
+# Patching behavior
+patching:
+  in_place: true
+  check_integrity: true
+  create_grf: false
+
+# Custom Messages
+messages:
+  patching:
+    error_download: "Falha ao baixar o patch. Verifique sua conexão."
+    error_extract: "Falha ao extrair arquivos. Verifique permissões."
+    error_generic: "Ocorreu um erro durante a atualização."
+  game:
+    launch_error: "Falha ao iniciar o jogo. Verifique se o executável existe."
+  ui:
+    titles:
+      news: "Últimas Notícias"
+      sso_login: "Login Rápido (SSO)"
+      server_status: "Status do Servidor"
+      actions: "Ações"
+    buttons:
+      login: "Entrar"
+      setup: "Configurar"
+      toggle_gray: "Desativar Chão Cinza"
+      toggle_normal: "Ativar Chão Cinza"
+      manual_patch: "Patch Manual"
+      reset_cache: "Limpar Cache"
+      cancel: "Cancelar"
+      play: "Jogar"
+      patching: "Atualizando..."
+      wait: "Aguarde..."
+      retry: "Tentar Novamente"
+    status:
+      idle: "Pronto para começar"
+      checking: "Verificando atualizações..."
+      downloading: "Baixando: ${filename} (${current}/${total})"
+      patching: "Aplicando: ${filename} (${current}/${total})"
+      ready: "O jogo está atualizado!"
+      error: "Ocorreu um erro"

@@ -304,6 +304,8 @@ const App: React.FC = () => {
                     onCancel={handleCancelUpdate}
                     isGrayFloor={isGrayFloor}
                     onToggleGrf={handleToggleGrf}
+                    isSSOEnabled={config?.client?.sso_login ?? false}
+                    config={config}
                 />
             </main>
 

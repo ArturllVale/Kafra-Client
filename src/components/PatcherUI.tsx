@@ -16,6 +16,8 @@ interface PatcherUIProps {
     onCancel: () => void;
     isGrayFloor: boolean;
     onToggleGrf: () => void;
+    isSSOEnabled: boolean;
+    config: any; // Using any to avoid complex type drilling, or import PatcherConfig
 }
 
 export const PatcherUI: React.FC<PatcherUIProps> = ({
@@ -31,7 +33,9 @@ export const PatcherUI: React.FC<PatcherUIProps> = ({
     onRetry,
     onCancel,
     isGrayFloor,
-    onToggleGrf
+    onToggleGrf,
+    isSSOEnabled,
+    config
 }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -46,23 +50,39 @@ export const PatcherUI: React.FC<PatcherUIProps> = ({
     };
 
     const getStatusText = (): string => {
+        const msgs = config?.messages?.ui?.status;
+        if (!msgs) {
+            // Fallback if config is not yet loaded
+            switch (status.status) {
+                case 'idle': return 'Ready to start';
+                case 'checking': return 'Checking for updates...';
+                case 'downloading': return `Downloading: ${status.filename} (${status.current}/${status.total})`;
+                case 'patching': return `Applying: ${status.filename} (${status.current}/${status.total})`;
+                case 'ready': return 'Game is up to date!';
+                case 'error': return 'An error occurred';
+                default: return '';
+            }
+        }
+
         switch (status.status) {
             case 'idle':
-                return 'Ready to start';
+                return msgs.idle || 'Ready to start';
             case 'checking':
-                return 'Checking for updates...';
+                return msgs.checking || 'Checking for updates...';
             case 'downloading':
-                return status.filename
-                    ? `Downloading: ${status.filename} (${status.current}/${status.total})`
-                    : 'Downloading patches...';
+                return (msgs.downloading || 'Downloading: ${filename} (${current}/${total})')
+                    .replace('${filename}', status.filename || '')
+                    .replace('${current}', String(status.current || 0))
+                    .replace('${total}', String(status.total || 0));
             case 'patching':
-                return status.filename
-                    ? `Applying: ${status.filename} (${status.current}/${status.total})`
-                    : 'Applying patches...';
+                return (msgs.patching || 'Applying: ${filename} (${current}/${total})')
+                    .replace('${filename}', status.filename || '')
+                    .replace('${current}', String(status.current || 0))
+                    .replace('${total}', String(status.total || 0));
             case 'ready':
-                return 'Game is up to date!';
+                return msgs.ready || 'Game is up to date!';
             case 'error':
-                return 'An error occurred';
+                return msgs.error || 'An error occurred';
             default:
                 return '';
         }
@@ -100,7 +120,7 @@ export const PatcherUI: React.FC<PatcherUIProps> = ({
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                             </svg>
-                            Latest News
+                            {config?.messages?.ui?.titles?.news || 'Latest News'}
                         </h3>
                         <div className="custom-scrollbar space-y-3 pr-2 max-h-32">
                             <NewsItem
@@ -118,38 +138,40 @@ export const PatcherUI: React.FC<PatcherUIProps> = ({
                         </div>
                     </div>
 
-                    {/* SSO Login Form */}
-                    <form onSubmit={handleLogin} className="glass rounded-xl p-4">
-                        <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-3 flex items-center gap-2">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                            Quick Login (SSO)
-                        </h3>
-                        <div className="flex gap-2">
-                            <input
-                                type="text"
-                                placeholder="Username"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                className="flex-1 bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all"
-                            />
-                            <input
-                                type="password"
-                                placeholder="Password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="flex-1 bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all"
-                            />
-                            <button
-                                type="submit"
-                                disabled={!isReady || !username || !password}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg text-sm font-medium transition-all disabled:cursor-not-allowed"
-                            >
-                                Login
-                            </button>
-                        </div>
-                    </form>
+                    {/* SSO Login Form - Only visible if enabled */}
+                    {isSSOEnabled && (
+                        <form onSubmit={handleLogin} className="glass rounded-xl p-4">
+                            <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-3 flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                Quick Login (SSO)
+                            </h3>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    placeholder="Username"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    className="flex-1 bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all"
+                                />
+                                <input
+                                    type="password"
+                                    placeholder="Password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="flex-1 bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={!isReady || !username || !password}
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg text-sm font-medium transition-all disabled:cursor-not-allowed"
+                                >
+                                    Login
+                                </button>
+                            </div>
+                        </form>
+                    )}
                 </div>
 
                 {/* Right Column - Status & Actions */}
@@ -160,7 +182,7 @@ export const PatcherUI: React.FC<PatcherUIProps> = ({
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
                             </svg>
-                            Server Status
+                            {config?.messages?.ui?.titles?.server_status || 'Server Status'}
                         </h3>
                         <div className="space-y-2">
                             <ServerStatus name="Login" status="online" />
@@ -172,7 +194,7 @@ export const PatcherUI: React.FC<PatcherUIProps> = ({
                     {/* Quick Actions */}
                     <div className="glass rounded-xl p-4 flex-1">
                         <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-3">
-                            Actions
+                            {config?.messages?.ui?.titles?.actions || 'Actions'}
                         </h3>
                         <div className="space-y-2">
                             {onSetup && (
@@ -180,7 +202,7 @@ export const PatcherUI: React.FC<PatcherUIProps> = ({
                                     onClick={onSetup}
                                     className="w-full btn-secondary text-xs"
                                 >
-                                    Setup
+                                    {config?.messages?.ui?.buttons?.setup || 'Setup'}
                                 </button>
                             )}
                             <button
@@ -190,21 +212,23 @@ export const PatcherUI: React.FC<PatcherUIProps> = ({
                                     : 'bg-emerald-600/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-600/30'
                                     }`}
                             >
-                                {isGrayFloor ? 'Disable Gray Floor' : 'Enable Gray Floor'}
+                                {isGrayFloor
+                                    ? (config?.messages?.ui?.buttons?.toggle_gray || 'Disable Gray Floor')
+                                    : (config?.messages?.ui?.buttons?.toggle_normal || 'Enable Gray Floor')}
                             </button>
                             <button
                                 onClick={onManualPatch}
                                 disabled={isPatching}
                                 className="w-full btn-secondary text-xs disabled:opacity-50"
                             >
-                                Manual Patch
+                                {config?.messages?.ui?.buttons?.manual_patch || 'Manual Patch'}
                             </button>
                             <button
                                 onClick={onResetCache}
                                 disabled={isPatching}
                                 className="w-full btn-secondary text-xs disabled:opacity-50"
                             >
-                                Reset Cache
+                                {config?.messages?.ui?.buttons?.reset_cache || 'Reset Cache'}
                             </button>
                         </div>
                     </div>
@@ -242,7 +266,7 @@ export const PatcherUI: React.FC<PatcherUIProps> = ({
                                 onClick={onRetry}
                                 className="ml-auto text-blue-400 hover:text-blue-300 font-medium"
                             >
-                                Retry
+                                {config?.messages?.ui?.buttons?.retry || 'Retry'}
                             </button>
                         </div>
                     )}
@@ -261,17 +285,24 @@ export const PatcherUI: React.FC<PatcherUIProps> = ({
                             onClick={onCancel}
                             className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium transition-all"
                         >
-                            Cancel
+                            {config?.messages?.ui?.buttons?.cancel || 'Cancel'}
                         </button>
                     )}
 
-                    <button
-                        onClick={onPlay}
-                        disabled={!isReady}
-                        className="btn-primary"
-                    >
-                        {isReady ? 'Start Game' : isPatching ? 'Patching...' : 'Please Wait'}
-                    </button>
+                    {/* Start Game Button - Hidden if SSO is enabled */}
+                    {!isSSOEnabled && (
+                        <button
+                            onClick={onPlay}
+                            disabled={!isReady}
+                            className="btn-primary"
+                        >
+                            {isReady
+                                ? (config?.messages?.ui?.buttons?.play || 'Start Game')
+                                : isPatching
+                                    ? (config?.messages?.ui?.buttons?.patching || 'Patching...')
+                                    : (config?.messages?.ui?.buttons?.wait || 'Please Wait')}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

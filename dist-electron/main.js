@@ -6897,12 +6897,12 @@ dist.stringify = publicApi.stringify;
 dist.visit = visit.visit;
 dist.visitAsync = visit.visitAsync;
 async function loadConfig(configPath) {
-  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n;
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q, _R, _S, _T, _U, _V, _W, _X, _Y, _Z, __, _$, _aa, _ba, _ca, _da, _ea, _fa, _ga, _ha, _ia, _ja, _ka, _la, _ma, _na, _oa, _pa, _qa, _ra, _sa, _ta, _ua, _va, _wa, _xa, _ya, _za, _Aa, _Ba, _Ca, _Da, _Ea, _Fa;
   const content = await fs$1.promises.readFile(configPath, "utf-8");
   const parsed = dist.parse(content);
   const config2 = {
     window: {
-      title: ((_a = parsed.window) == null ? void 0 : _a.title) || "RPatchur",
+      title: ((_a = parsed.window) == null ? void 0 : _a.title) || "Kafra Client",
       width: ((_b = parsed.window) == null ? void 0 : _b.width) || 900,
       height: ((_c = parsed.window) == null ? void 0 : _c.height) || 600,
       resizable: ((_d = parsed.window) == null ? void 0 : _d.resizable) ?? false
@@ -6927,12 +6927,52 @@ async function loadConfig(configPath) {
       }))
     },
     client: {
-      default_grf_name: ((_k = parsed.client) == null ? void 0 : _k.default_grf_name) || "data.grf"
+      default_grf_name: ((_k = parsed.client) == null ? void 0 : _k.default_grf_name) || "data.grf",
+      sso_login: ((_l = parsed.client) == null ? void 0 : _l.sso_login) ?? false
     },
     patching: {
-      in_place: ((_l = parsed.patching) == null ? void 0 : _l.in_place) ?? true,
-      check_integrity: ((_m = parsed.patching) == null ? void 0 : _m.check_integrity) ?? true,
-      create_grf: ((_n = parsed.patching) == null ? void 0 : _n.create_grf) ?? false
+      in_place: ((_m = parsed.patching) == null ? void 0 : _m.in_place) ?? true,
+      check_integrity: ((_n = parsed.patching) == null ? void 0 : _n.check_integrity) ?? true,
+      create_grf: ((_o = parsed.patching) == null ? void 0 : _o.create_grf) ?? false
+    },
+    messages: {
+      patching: {
+        error_download: ((_q = (_p = parsed.messages) == null ? void 0 : _p.patching) == null ? void 0 : _q.error_download) || "Failed to download patch",
+        error_extract: ((_s = (_r = parsed.messages) == null ? void 0 : _r.patching) == null ? void 0 : _s.error_extract) || "Failed to extract patch",
+        error_generic: ((_u = (_t = parsed.messages) == null ? void 0 : _t.patching) == null ? void 0 : _u.error_generic) || "An error occurred during patching"
+      },
+      game: {
+        launch_error: ((_w = (_v = parsed.messages) == null ? void 0 : _v.game) == null ? void 0 : _w.launch_error) || "Failed to launch game"
+      },
+      ui: {
+        titles: {
+          news: ((_z = (_y = (_x = parsed.messages) == null ? void 0 : _x.ui) == null ? void 0 : _y.titles) == null ? void 0 : _z.news) || "Latest News",
+          sso_login: ((_C = (_B = (_A = parsed.messages) == null ? void 0 : _A.ui) == null ? void 0 : _B.titles) == null ? void 0 : _C.sso_login) || "Quick Login (SSO)",
+          server_status: ((_F = (_E = (_D = parsed.messages) == null ? void 0 : _D.ui) == null ? void 0 : _E.titles) == null ? void 0 : _F.server_status) || "Server Status",
+          actions: ((_I = (_H = (_G = parsed.messages) == null ? void 0 : _G.ui) == null ? void 0 : _H.titles) == null ? void 0 : _I.actions) || "Actions"
+        },
+        buttons: {
+          login: ((_L = (_K = (_J = parsed.messages) == null ? void 0 : _J.ui) == null ? void 0 : _K.buttons) == null ? void 0 : _L.login) || "Login",
+          setup: ((_O = (_N = (_M = parsed.messages) == null ? void 0 : _M.ui) == null ? void 0 : _N.buttons) == null ? void 0 : _O.setup) || "Setup",
+          toggle_gray: ((_R = (_Q = (_P = parsed.messages) == null ? void 0 : _P.ui) == null ? void 0 : _Q.buttons) == null ? void 0 : _R.toggle_gray) || "Disable Gray Floor",
+          toggle_normal: ((_U = (_T = (_S = parsed.messages) == null ? void 0 : _S.ui) == null ? void 0 : _T.buttons) == null ? void 0 : _U.toggle_normal) || "Enable Gray Floor",
+          manual_patch: ((_X = (_W = (_V = parsed.messages) == null ? void 0 : _V.ui) == null ? void 0 : _W.buttons) == null ? void 0 : _X.manual_patch) || "Manual Patch",
+          reset_cache: ((__ = (_Z = (_Y = parsed.messages) == null ? void 0 : _Y.ui) == null ? void 0 : _Z.buttons) == null ? void 0 : __.reset_cache) || "Reset Cache",
+          cancel: ((_ba = (_aa = (_$ = parsed.messages) == null ? void 0 : _$.ui) == null ? void 0 : _aa.buttons) == null ? void 0 : _ba.cancel) || "Cancel",
+          play: ((_ea = (_da = (_ca = parsed.messages) == null ? void 0 : _ca.ui) == null ? void 0 : _da.buttons) == null ? void 0 : _ea.play) || "Start Game",
+          patching: ((_ha = (_ga = (_fa = parsed.messages) == null ? void 0 : _fa.ui) == null ? void 0 : _ga.buttons) == null ? void 0 : _ha.patching) || "Patching...",
+          wait: ((_ka = (_ja = (_ia = parsed.messages) == null ? void 0 : _ia.ui) == null ? void 0 : _ja.buttons) == null ? void 0 : _ka.wait) || "Please Wait",
+          retry: ((_na = (_ma = (_la = parsed.messages) == null ? void 0 : _la.ui) == null ? void 0 : _ma.buttons) == null ? void 0 : _na.retry) || "Retry"
+        },
+        status: {
+          idle: ((_qa = (_pa = (_oa = parsed.messages) == null ? void 0 : _oa.ui) == null ? void 0 : _pa.status) == null ? void 0 : _qa.idle) || "Ready to start",
+          checking: ((_ta = (_sa = (_ra = parsed.messages) == null ? void 0 : _ra.ui) == null ? void 0 : _sa.status) == null ? void 0 : _ta.checking) || "Checking for updates...",
+          downloading: ((_wa = (_va = (_ua = parsed.messages) == null ? void 0 : _ua.ui) == null ? void 0 : _va.status) == null ? void 0 : _wa.downloading) || "Downloading: ${filename} (${current}/${total})",
+          patching: ((_za = (_ya = (_xa = parsed.messages) == null ? void 0 : _xa.ui) == null ? void 0 : _ya.status) == null ? void 0 : _za.patching) || "Applying: ${filename} (${current}/${total})",
+          ready: ((_Ca = (_Ba = (_Aa = parsed.messages) == null ? void 0 : _Aa.ui) == null ? void 0 : _Ba.status) == null ? void 0 : _Ca.ready) || "Game is up to date!",
+          error: ((_Fa = (_Ea = (_Da = parsed.messages) == null ? void 0 : _Da.ui) == null ? void 0 : _Ea.status) == null ? void 0 : _Fa.error) || "An error occurred"
+        }
+      }
     }
   };
   return config2;
@@ -26857,7 +26897,7 @@ function setupIpcHandlers() {
     return config;
   });
   electron.ipcMain.handle("start-update", async () => {
-    var _a;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;
     if (!config) {
       return { success: false, error: "No configuration loaded" };
     }
@@ -26882,9 +26922,14 @@ function setupIpcHandlers() {
           total: patches.length,
           filename: patch.filename
         });
-        await downloadPatch(patchUrl, tempPath, (progress) => {
-          mainWindow == null ? void 0 : mainWindow.webContents.send("download-progress", progress);
-        });
+        try {
+          await downloadPatch(patchUrl, tempPath, (progress) => {
+            mainWindow == null ? void 0 : mainWindow.webContents.send("download-progress", progress);
+          });
+        } catch (e) {
+          const msg = ((_b = (_a = config == null ? void 0 : config.messages) == null ? void 0 : _a.patching) == null ? void 0 : _b.error_download) || "Download failed";
+          throw new Error(msg);
+        }
         mainWindow == null ? void 0 : mainWindow.webContents.send("patching-status", {
           status: "patching",
           current: i + 1,
@@ -26892,7 +26937,12 @@ function setupIpcHandlers() {
           filename: patch.filename
         });
         const targetDir = path$1.dirname(electron.app.getPath("exe"));
-        await extractThorPatch(tempPath, targetDir, ((_a = config.client) == null ? void 0 : _a.default_grf_name) || "data.grf");
+        try {
+          await extractThorPatch(tempPath, targetDir, ((_c = config.client) == null ? void 0 : _c.default_grf_name) || "data.grf");
+        } catch (e) {
+          const msg = ((_e = (_d = config == null ? void 0 : config.messages) == null ? void 0 : _d.patching) == null ? void 0 : _e.error_extract) || "Extraction failed";
+          throw new Error(msg);
+        }
         try {
           fs$1.unlinkSync(tempPath);
         } catch (e) {
@@ -26902,15 +26952,17 @@ function setupIpcHandlers() {
       return { success: true };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : "Unknown error";
-      mainWindow == null ? void 0 : mainWindow.webContents.send("patching-status", { status: "error", error: errorMsg });
-      return { success: false, error: errorMsg };
+      const isCustomError = ((_g = (_f = config == null ? void 0 : config.messages) == null ? void 0 : _f.patching) == null ? void 0 : _g.error_download) && errorMsg === config.messages.patching.error_download || ((_i = (_h = config == null ? void 0 : config.messages) == null ? void 0 : _h.patching) == null ? void 0 : _i.error_extract) && errorMsg === config.messages.patching.error_extract;
+      const finalError = isCustomError ? errorMsg : ((_k = (_j = config == null ? void 0 : config.messages) == null ? void 0 : _j.patching) == null ? void 0 : _k.error_generic) || errorMsg;
+      mainWindow == null ? void 0 : mainWindow.webContents.send("patching-status", { status: "error", error: finalError });
+      return { success: false, error: finalError };
     }
   });
   electron.ipcMain.on("cancel-update", () => {
     mainWindow == null ? void 0 : mainWindow.webContents.send("patching-status", { status: "idle" });
   });
   electron.ipcMain.handle("launch-game", async () => {
-    var _a;
+    var _a, _b, _c;
     if (!((_a = config == null ? void 0 : config.play) == null ? void 0 : _a.path)) {
       return { success: false, error: "Game path not configured" };
     }
@@ -26927,7 +26979,7 @@ function setupIpcHandlers() {
       }
       return { success: true };
     } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : "Failed to launch game" };
+      return { success: false, error: ((_c = (_b = config.messages) == null ? void 0 : _b.game) == null ? void 0 : _c.launch_error) || (error instanceof Error ? error.message : "Failed to launch game") };
     }
   });
   electron.ipcMain.handle("launch-setup", async () => {
@@ -27048,8 +27100,8 @@ function setupIpcHandlers() {
   });
 }
 electron.app.whenReady().then(async () => {
-  const configPath = path$1.join(path$1.dirname(electron.app.getPath("exe")), "rpatchur.yml");
-  const devConfigPath = path$1.join(__dirname$1, "../rpatchur.yml");
+  const configPath = path$1.join(path$1.dirname(electron.app.getPath("exe")), "config.yml");
+  const devConfigPath = path$1.join(__dirname$1, "../config.yml");
   try {
     if (fs$1.existsSync(configPath)) {
       config = await loadConfig(configPath);
@@ -27057,7 +27109,7 @@ electron.app.whenReady().then(async () => {
       config = await loadConfig(devConfigPath);
     } else {
       config = {
-        window: { title: "RPatchur", width: 900, height: 600, resizable: false },
+        window: { title: "Kafra Client", width: 900, height: 600, resizable: false },
         play: { path: "ragnarok.exe", arguments: [], exit_on_success: true },
         web: { index_url: "", patch_servers: [] },
         client: { default_grf_name: "data.grf" },
