@@ -35,24 +35,47 @@ impl GrfWriter {
         for (filename, data) in &new_files {
             let normalized = filename.replace('\\', "/");
             
-            // For simplicity, we write uncompressed or use a simple compression
-            // In production, this would use proper GRF compression
+            // Compress data using ZLIB
+            use flate2::write::ZlibEncoder;
+            use flate2::Compression;
+            
+            let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+            encoder.write_all(data)
+                .map_err(|e| format!("Failed to compress file {}: {}", filename, e))?;
+            let compressed_data = encoder.finish()
+                .map_err(|e| format!("Failed to finish compression for {}: {}", filename, e))?;
+
+            let compressed_size = compressed_data.len() as i32;
+            let real_size = data.len() as i32;
+
+            // Calculate aligned size (8-byte alignment)
+            let aligned_size = (compressed_size + 7) & !7;
+            let padding = aligned_size - compressed_size;
+
             let entry = GrfEntry {
                 filename: normalized.clone(),
-                compressed_size: data.len() as i32,
-                compressed_size_aligned: data.len() as i32,
-                real_size: data.len() as i32,
+                compressed_size,
+                compressed_size_aligned: aligned_size,
+                real_size,
                 flags: 0x01, // FILE flag
                 offset: (data_offset - GRF_HEADER_SIZE as u64) as i32,
                 _is_new: true,
                 _data: Some(data.clone()),
             };
 
-            file.write_all(data)
+            // Write compressed data
+            file.write_all(&compressed_data)
                 .map_err(|e| format!("Failed to write file data: {}", e))?;
 
+            // Write padding if needed
+            if padding > 0 {
+                let pad_bytes = vec![0u8; padding as usize];
+                file.write_all(&pad_bytes)
+                    .map_err(|e| format!("Failed to write padding: {}", e))?;
+            }
+
             table.insert(normalized.to_lowercase(), entry);
-            data_offset += data.len() as u64;
+            data_offset += aligned_size as u64;
         }
 
         // Rebuild file table

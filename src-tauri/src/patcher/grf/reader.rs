@@ -29,23 +29,45 @@ impl GrfReader {
         // Key (14 bytes)
         let key = buffer[15..29].to_vec();
 
-        // File Table Offset (8 bytes, little-endian u64)
-        let file_table_offset = u64::from_le_bytes([
-            buffer[30], buffer[31], buffer[32], buffer[33],
-            buffer[34], buffer[35], buffer[36], buffer[37],
+        // Version (4 bytes at 0x2A)
+        let version_offset = 0x2A;
+        let version = u32::from_le_bytes([
+            buffer[version_offset], buffer[version_offset + 1], 
+            buffer[version_offset + 2], buffer[version_offset + 3]
         ]);
+        let major_version = (version >> 8) as u8;
 
-        // Seed and file count
-        let seed = i32::from_le_bytes([buffer[38], buffer[39], buffer[40], buffer[41]]);
-        let raw_file_count = i32::from_le_bytes([buffer[42], buffer[43], buffer[44], buffer[45]]);
-        let real_file_count = raw_file_count - seed - 7;
+        let file_table_offset;
+        let real_file_count;
+
+        // Header parsing logic based on version
+        if major_version == 3 {
+             // v3.0: Offset is 8 bytes at 0x1E
+             file_table_offset = u64::from_le_bytes([
+                buffer[30], buffer[31], buffer[32], buffer[33],
+                buffer[34], buffer[35], buffer[36], buffer[37],
+            ]);
+            // v3.0: RealFilesCount at 0x22 (previously seed)
+            real_file_count = i32::from_le_bytes([buffer[38], buffer[39], buffer[40], buffer[41]]);
+        } else {
+            // v1.x / v2.0: Offset is 4 bytes at 0x1E
+            let raw_offset = u32::from_le_bytes([buffer[30], buffer[31], buffer[32], buffer[33]]);
+            file_table_offset = raw_offset as u64;
+
+            // Seed at 0x22
+            let seed = i32::from_le_bytes([buffer[38], buffer[39], buffer[40], buffer[41]]);
+            // FilesCount at 0x26
+            let raw_file_count = i32::from_le_bytes([buffer[42], buffer[43], buffer[44], buffer[45]]);
+            
+            real_file_count = raw_file_count - seed - 7;
+        }
 
         Ok(GrfHeader {
             _signature: signature,
             _key: key,
             file_table_offset,
             real_file_count,
-            _version: 0x200,
+            _version: version,
         })
     }
 

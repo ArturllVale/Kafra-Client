@@ -70,34 +70,37 @@ async fn start_update(
             error: None,
         });
 
-        // Fetch patch list
-        let patch_server = match config.web.patch_servers.first() {
-            Some(server) => server,
-            None => {
-                let _ = app_clone.emit_all("patching-status", PatchingStatus {
-                    status: "error".to_string(),
-                    current: None,
-                    total: None,
-                    filename: None,
-                    error: Some("No patch server configured".to_string()),
-                });
-                return;
-            }
-        };
+        // Fetch patch list with fallback
+        let mut patches = Vec::new();
+        let mut active_server = None;
+        let mut last_error = "No patch servers configured".to_string();
 
-        let patches = match fetch_patch_list(&patch_server.plist_url).await {
-            Ok(p) => p,
-            Err(e) => {
-                let _ = app_clone.emit_all("patching-status", PatchingStatus {
-                    status: "error".to_string(),
-                    current: None,
-                    total: None,
-                    filename: None,
-                    error: Some(e),
-                });
-                return;
+        for server in &config.web.patch_servers {
+            match fetch_patch_list(&server.plist_url).await {
+                Ok(p) => {
+                    patches = p;
+                    active_server = Some(server);
+                    break;
+                }
+                Err(e) => {
+                    println!("Failed to fetch from {}: {}", server.name, e);
+                    last_error = e;
+                }
             }
-        };
+        }
+
+        if active_server.is_none() {
+             let _ = app_clone.emit_all("patching-status", PatchingStatus {
+                status: "error".to_string(),
+                current: None,
+                total: None,
+                filename: None,
+                error: Some(format!("All patch servers failed. Last error: {}", last_error)),
+            });
+            return;
+        }
+
+        let patch_server = active_server.unwrap();
 
         if patches.is_empty() {
             let _ = app_clone.emit_all("patching-status", PatchingStatus {
