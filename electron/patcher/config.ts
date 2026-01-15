@@ -12,6 +12,7 @@ export interface PlayConfig {
     path: string;
     arguments?: string[];
     exit_on_success?: boolean;
+    skip_error?: boolean;
 }
 
 export interface SetupConfig {
@@ -110,7 +111,8 @@ export async function loadConfig(configPath: string): Promise<PatcherConfig> {
         play: {
             path: parsed.play?.path || 'ragnarok.exe',
             arguments: parsed.play?.arguments || [],
-            exit_on_success: parsed.play?.exit_on_success ?? true
+            exit_on_success: parsed.play?.exit_on_success ?? true,
+            skip_error: parsed.play?.skip_error ?? false
         },
         setup: parsed.setup ? {
             path: parsed.setup.path,

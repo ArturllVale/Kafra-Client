@@ -294,7 +294,7 @@ const App: React.FC = () => {
                     status={status}
                     progress={progress}
                     error={error}
-                    isReady={status.status === 'ready'}
+                    isReady={status.status === 'ready' || (status.status === 'error' && (config?.play?.skip_error ?? false))}
                     onPlay={handlePlay}
                     onSetup={config?.setup ? handleSetup : undefined}
                     onLogin={handleLogin}

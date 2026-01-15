@@ -13,6 +13,7 @@ play:
   path: "ragnarok.exe"
   arguments: []
   exit_on_success: true
+  skip_error: true
 
 # Setup button configuration (optional)
 # setup:

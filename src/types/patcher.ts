@@ -44,6 +44,7 @@ export interface PatcherConfig {
         path: string;
         arguments?: string[];
         exit_on_success?: boolean;
+        skip_error?: boolean;
     };
     setup?: {
         path: string;

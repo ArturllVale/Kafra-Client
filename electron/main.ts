@@ -174,14 +174,39 @@ function setupIpcHandlers() {
         }
 
         try {
-            const gamePath = path.resolve(path.dirname(app.getPath('exe')), config.play.path);
+            const exeDir = path.dirname(app.getPath('exe'));
+            let gamePath = path.resolve(exeDir, config.play.path);
+
+            // Dev mode fallback: look in project root
+            if (!app.isPackaged && !fs.existsSync(gamePath)) {
+                // Try looking in the project root (2 levels up from dist-electron/main.js usually, or just process.cwd())
+                const projectRoot = process.cwd();
+                const devGamePath = path.resolve(projectRoot, config.play.path);
+                if (fs.existsSync(devGamePath)) {
+                    gamePath = devGamePath;
+                }
+            }
+
+            if (!fs.existsSync(gamePath)) {
+                return {
+                    success: false,
+                    error: `Game executable not found at: ${gamePath}`
+                };
+            }
+
             const args = config.play.arguments || [];
 
-            spawn(gamePath, args, {
+            const subprocess = spawn(gamePath, args, {
                 detached: true,
                 stdio: 'ignore',
                 cwd: path.dirname(gamePath)
-            }).unref();
+            });
+
+            subprocess.on('error', (err) => {
+                console.error('Failed to spawn game:', err);
+            });
+
+            subprocess.unref();
 
             if (config.play.exit_on_success !== false) {
                 app.quit();

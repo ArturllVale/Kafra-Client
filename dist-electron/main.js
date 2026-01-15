@@ -6897,7 +6897,7 @@ dist.stringify = publicApi.stringify;
 dist.visit = visit.visit;
 dist.visitAsync = visit.visitAsync;
 async function loadConfig(configPath) {
-  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q, _R, _S, _T, _U, _V, _W, _X, _Y, _Z, __, _$, _aa, _ba, _ca, _da, _ea, _fa, _ga, _ha, _ia, _ja, _ka, _la, _ma, _na, _oa, _pa, _qa, _ra, _sa, _ta, _ua, _va, _wa, _xa, _ya, _za, _Aa, _Ba, _Ca, _Da, _Ea, _Fa;
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q, _R, _S, _T, _U, _V, _W, _X, _Y, _Z, __, _$, _aa, _ba, _ca, _da, _ea, _fa, _ga, _ha, _ia, _ja, _ka, _la, _ma, _na, _oa, _pa, _qa, _ra, _sa, _ta, _ua, _va, _wa, _xa, _ya, _za, _Aa, _Ba, _Ca, _Da, _Ea, _Fa, _Ga;
   const content = await fs$1.promises.readFile(configPath, "utf-8");
   const parsed = dist.parse(content);
   const config2 = {
@@ -6910,7 +6910,8 @@ async function loadConfig(configPath) {
     play: {
       path: ((_e = parsed.play) == null ? void 0 : _e.path) || "ragnarok.exe",
       arguments: ((_f = parsed.play) == null ? void 0 : _f.arguments) || [],
-      exit_on_success: ((_g = parsed.play) == null ? void 0 : _g.exit_on_success) ?? true
+      exit_on_success: ((_g = parsed.play) == null ? void 0 : _g.exit_on_success) ?? true,
+      skip_error: ((_h = parsed.play) == null ? void 0 : _h.skip_error) ?? false
     },
     setup: parsed.setup ? {
       path: parsed.setup.path,
@@ -6918,59 +6919,59 @@ async function loadConfig(configPath) {
       exit_on_success: parsed.setup.exit_on_success ?? false
     } : void 0,
     web: {
-      index_url: ((_h = parsed.web) == null ? void 0 : _h.index_url) || "",
-      preferred_patch_server: (_i = parsed.web) == null ? void 0 : _i.preferred_patch_server,
-      patch_servers: (((_j = parsed.web) == null ? void 0 : _j.patch_servers) || []).map((server) => ({
+      index_url: ((_i = parsed.web) == null ? void 0 : _i.index_url) || "",
+      preferred_patch_server: (_j = parsed.web) == null ? void 0 : _j.preferred_patch_server,
+      patch_servers: (((_k = parsed.web) == null ? void 0 : _k.patch_servers) || []).map((server) => ({
         name: server.name || "default",
         plist_url: server.plist_url || "",
         patch_url: server.patch_url || ""
       }))
     },
     client: {
-      default_grf_name: ((_k = parsed.client) == null ? void 0 : _k.default_grf_name) || "data.grf",
-      sso_login: ((_l = parsed.client) == null ? void 0 : _l.sso_login) ?? false
+      default_grf_name: ((_l = parsed.client) == null ? void 0 : _l.default_grf_name) || "data.grf",
+      sso_login: ((_m = parsed.client) == null ? void 0 : _m.sso_login) ?? false
     },
     patching: {
-      in_place: ((_m = parsed.patching) == null ? void 0 : _m.in_place) ?? true,
-      check_integrity: ((_n = parsed.patching) == null ? void 0 : _n.check_integrity) ?? true,
-      create_grf: ((_o = parsed.patching) == null ? void 0 : _o.create_grf) ?? false
+      in_place: ((_n = parsed.patching) == null ? void 0 : _n.in_place) ?? true,
+      check_integrity: ((_o = parsed.patching) == null ? void 0 : _o.check_integrity) ?? true,
+      create_grf: ((_p = parsed.patching) == null ? void 0 : _p.create_grf) ?? false
     },
     messages: {
       patching: {
-        error_download: ((_q = (_p = parsed.messages) == null ? void 0 : _p.patching) == null ? void 0 : _q.error_download) || "Failed to download patch",
-        error_extract: ((_s = (_r = parsed.messages) == null ? void 0 : _r.patching) == null ? void 0 : _s.error_extract) || "Failed to extract patch",
-        error_generic: ((_u = (_t = parsed.messages) == null ? void 0 : _t.patching) == null ? void 0 : _u.error_generic) || "An error occurred during patching"
+        error_download: ((_r = (_q = parsed.messages) == null ? void 0 : _q.patching) == null ? void 0 : _r.error_download) || "Failed to download patch",
+        error_extract: ((_t = (_s = parsed.messages) == null ? void 0 : _s.patching) == null ? void 0 : _t.error_extract) || "Failed to extract patch",
+        error_generic: ((_v = (_u = parsed.messages) == null ? void 0 : _u.patching) == null ? void 0 : _v.error_generic) || "An error occurred during patching"
       },
       game: {
-        launch_error: ((_w = (_v = parsed.messages) == null ? void 0 : _v.game) == null ? void 0 : _w.launch_error) || "Failed to launch game"
+        launch_error: ((_x = (_w = parsed.messages) == null ? void 0 : _w.game) == null ? void 0 : _x.launch_error) || "Failed to launch game"
       },
       ui: {
         titles: {
-          news: ((_z = (_y = (_x = parsed.messages) == null ? void 0 : _x.ui) == null ? void 0 : _y.titles) == null ? void 0 : _z.news) || "Latest News",
-          sso_login: ((_C = (_B = (_A = parsed.messages) == null ? void 0 : _A.ui) == null ? void 0 : _B.titles) == null ? void 0 : _C.sso_login) || "Quick Login (SSO)",
-          server_status: ((_F = (_E = (_D = parsed.messages) == null ? void 0 : _D.ui) == null ? void 0 : _E.titles) == null ? void 0 : _F.server_status) || "Server Status",
-          actions: ((_I = (_H = (_G = parsed.messages) == null ? void 0 : _G.ui) == null ? void 0 : _H.titles) == null ? void 0 : _I.actions) || "Actions"
+          news: ((_A = (_z = (_y = parsed.messages) == null ? void 0 : _y.ui) == null ? void 0 : _z.titles) == null ? void 0 : _A.news) || "Latest News",
+          sso_login: ((_D = (_C = (_B = parsed.messages) == null ? void 0 : _B.ui) == null ? void 0 : _C.titles) == null ? void 0 : _D.sso_login) || "Quick Login (SSO)",
+          server_status: ((_G = (_F = (_E = parsed.messages) == null ? void 0 : _E.ui) == null ? void 0 : _F.titles) == null ? void 0 : _G.server_status) || "Server Status",
+          actions: ((_J = (_I = (_H = parsed.messages) == null ? void 0 : _H.ui) == null ? void 0 : _I.titles) == null ? void 0 : _J.actions) || "Actions"
         },
         buttons: {
-          login: ((_L = (_K = (_J = parsed.messages) == null ? void 0 : _J.ui) == null ? void 0 : _K.buttons) == null ? void 0 : _L.login) || "Login",
-          setup: ((_O = (_N = (_M = parsed.messages) == null ? void 0 : _M.ui) == null ? void 0 : _N.buttons) == null ? void 0 : _O.setup) || "Setup",
-          toggle_gray: ((_R = (_Q = (_P = parsed.messages) == null ? void 0 : _P.ui) == null ? void 0 : _Q.buttons) == null ? void 0 : _R.toggle_gray) || "Disable Gray Floor",
-          toggle_normal: ((_U = (_T = (_S = parsed.messages) == null ? void 0 : _S.ui) == null ? void 0 : _T.buttons) == null ? void 0 : _U.toggle_normal) || "Enable Gray Floor",
-          manual_patch: ((_X = (_W = (_V = parsed.messages) == null ? void 0 : _V.ui) == null ? void 0 : _W.buttons) == null ? void 0 : _X.manual_patch) || "Manual Patch",
-          reset_cache: ((__ = (_Z = (_Y = parsed.messages) == null ? void 0 : _Y.ui) == null ? void 0 : _Z.buttons) == null ? void 0 : __.reset_cache) || "Reset Cache",
-          cancel: ((_ba = (_aa = (_$ = parsed.messages) == null ? void 0 : _$.ui) == null ? void 0 : _aa.buttons) == null ? void 0 : _ba.cancel) || "Cancel",
-          play: ((_ea = (_da = (_ca = parsed.messages) == null ? void 0 : _ca.ui) == null ? void 0 : _da.buttons) == null ? void 0 : _ea.play) || "Start Game",
-          patching: ((_ha = (_ga = (_fa = parsed.messages) == null ? void 0 : _fa.ui) == null ? void 0 : _ga.buttons) == null ? void 0 : _ha.patching) || "Patching...",
-          wait: ((_ka = (_ja = (_ia = parsed.messages) == null ? void 0 : _ia.ui) == null ? void 0 : _ja.buttons) == null ? void 0 : _ka.wait) || "Please Wait",
-          retry: ((_na = (_ma = (_la = parsed.messages) == null ? void 0 : _la.ui) == null ? void 0 : _ma.buttons) == null ? void 0 : _na.retry) || "Retry"
+          login: ((_M = (_L = (_K = parsed.messages) == null ? void 0 : _K.ui) == null ? void 0 : _L.buttons) == null ? void 0 : _M.login) || "Login",
+          setup: ((_P = (_O = (_N = parsed.messages) == null ? void 0 : _N.ui) == null ? void 0 : _O.buttons) == null ? void 0 : _P.setup) || "Setup",
+          toggle_gray: ((_S = (_R = (_Q = parsed.messages) == null ? void 0 : _Q.ui) == null ? void 0 : _R.buttons) == null ? void 0 : _S.toggle_gray) || "Disable Gray Floor",
+          toggle_normal: ((_V = (_U = (_T = parsed.messages) == null ? void 0 : _T.ui) == null ? void 0 : _U.buttons) == null ? void 0 : _V.toggle_normal) || "Enable Gray Floor",
+          manual_patch: ((_Y = (_X = (_W = parsed.messages) == null ? void 0 : _W.ui) == null ? void 0 : _X.buttons) == null ? void 0 : _Y.manual_patch) || "Manual Patch",
+          reset_cache: ((_$ = (__ = (_Z = parsed.messages) == null ? void 0 : _Z.ui) == null ? void 0 : __.buttons) == null ? void 0 : _$.reset_cache) || "Reset Cache",
+          cancel: ((_ca = (_ba = (_aa = parsed.messages) == null ? void 0 : _aa.ui) == null ? void 0 : _ba.buttons) == null ? void 0 : _ca.cancel) || "Cancel",
+          play: ((_fa = (_ea = (_da = parsed.messages) == null ? void 0 : _da.ui) == null ? void 0 : _ea.buttons) == null ? void 0 : _fa.play) || "Start Game",
+          patching: ((_ia = (_ha = (_ga = parsed.messages) == null ? void 0 : _ga.ui) == null ? void 0 : _ha.buttons) == null ? void 0 : _ia.patching) || "Patching...",
+          wait: ((_la = (_ka = (_ja = parsed.messages) == null ? void 0 : _ja.ui) == null ? void 0 : _ka.buttons) == null ? void 0 : _la.wait) || "Please Wait",
+          retry: ((_oa = (_na = (_ma = parsed.messages) == null ? void 0 : _ma.ui) == null ? void 0 : _na.buttons) == null ? void 0 : _oa.retry) || "Retry"
         },
         status: {
-          idle: ((_qa = (_pa = (_oa = parsed.messages) == null ? void 0 : _oa.ui) == null ? void 0 : _pa.status) == null ? void 0 : _qa.idle) || "Ready to start",
-          checking: ((_ta = (_sa = (_ra = parsed.messages) == null ? void 0 : _ra.ui) == null ? void 0 : _sa.status) == null ? void 0 : _ta.checking) || "Checking for updates...",
-          downloading: ((_wa = (_va = (_ua = parsed.messages) == null ? void 0 : _ua.ui) == null ? void 0 : _va.status) == null ? void 0 : _wa.downloading) || "Downloading: ${filename} (${current}/${total})",
-          patching: ((_za = (_ya = (_xa = parsed.messages) == null ? void 0 : _xa.ui) == null ? void 0 : _ya.status) == null ? void 0 : _za.patching) || "Applying: ${filename} (${current}/${total})",
-          ready: ((_Ca = (_Ba = (_Aa = parsed.messages) == null ? void 0 : _Aa.ui) == null ? void 0 : _Ba.status) == null ? void 0 : _Ca.ready) || "Game is up to date!",
-          error: ((_Fa = (_Ea = (_Da = parsed.messages) == null ? void 0 : _Da.ui) == null ? void 0 : _Ea.status) == null ? void 0 : _Fa.error) || "An error occurred"
+          idle: ((_ra = (_qa = (_pa = parsed.messages) == null ? void 0 : _pa.ui) == null ? void 0 : _qa.status) == null ? void 0 : _ra.idle) || "Ready to start",
+          checking: ((_ua = (_ta = (_sa = parsed.messages) == null ? void 0 : _sa.ui) == null ? void 0 : _ta.status) == null ? void 0 : _ua.checking) || "Checking for updates...",
+          downloading: ((_xa = (_wa = (_va = parsed.messages) == null ? void 0 : _va.ui) == null ? void 0 : _wa.status) == null ? void 0 : _xa.downloading) || "Downloading: ${filename} (${current}/${total})",
+          patching: ((_Aa = (_za = (_ya = parsed.messages) == null ? void 0 : _ya.ui) == null ? void 0 : _za.status) == null ? void 0 : _Aa.patching) || "Applying: ${filename} (${current}/${total})",
+          ready: ((_Da = (_Ca = (_Ba = parsed.messages) == null ? void 0 : _Ba.ui) == null ? void 0 : _Ca.status) == null ? void 0 : _Da.ready) || "Game is up to date!",
+          error: ((_Ga = (_Fa = (_Ea = parsed.messages) == null ? void 0 : _Ea.ui) == null ? void 0 : _Fa.status) == null ? void 0 : _Ga.error) || "An error occurred"
         }
       }
     }
@@ -26967,13 +26968,31 @@ function setupIpcHandlers() {
       return { success: false, error: "Game path not configured" };
     }
     try {
-      const gamePath = path$1.resolve(path$1.dirname(electron.app.getPath("exe")), config.play.path);
+      const exeDir = path$1.dirname(electron.app.getPath("exe"));
+      let gamePath = path$1.resolve(exeDir, config.play.path);
+      if (!electron.app.isPackaged && !fs$1.existsSync(gamePath)) {
+        const projectRoot = process.cwd();
+        const devGamePath = path$1.resolve(projectRoot, config.play.path);
+        if (fs$1.existsSync(devGamePath)) {
+          gamePath = devGamePath;
+        }
+      }
+      if (!fs$1.existsSync(gamePath)) {
+        return {
+          success: false,
+          error: `Game executable not found at: ${gamePath}`
+        };
+      }
       const args = config.play.arguments || [];
-      child_process.spawn(gamePath, args, {
+      const subprocess = child_process.spawn(gamePath, args, {
         detached: true,
         stdio: "ignore",
         cwd: path$1.dirname(gamePath)
-      }).unref();
+      });
+      subprocess.on("error", (err) => {
+        console.error("Failed to spawn game:", err);
+      });
+      subprocess.unref();
       if (config.play.exit_on_success !== false) {
         electron.app.quit();
       }
