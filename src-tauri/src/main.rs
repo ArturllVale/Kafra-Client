@@ -8,7 +8,8 @@ use config::PatcherConfig;
 #[cfg(debug_assertions)]
 use config::load_config;
 use patcher::downloader::{download_patch, DownloadProgress};
-use patcher::patch_list::fetch_patch_list;
+use patcher::downloader::{download_patch, DownloadProgress};
+use patcher::patch_list::{fetch_patch_list, get_local_cache, save_local_cache, filter_unapplied_patches};
 use patcher::thor_patcher::extract_thor_patch;
 use serde::{Deserialize, Serialize};
 use std::process::Command;
@@ -114,11 +115,30 @@ async fn start_update(
         }
 
         // Download and apply patches
+        // Download and apply patches
         let exe_path = std::env::current_exe().unwrap();
         let target_dir = exe_path.parent().unwrap().to_string_lossy().to_string();
+        let cache_path = exe_path.parent().unwrap().join("autopatcher.dat");
         let temp_dir = std::env::temp_dir();
 
-        for (i, patch) in patches.iter().enumerate() {
+        // Load cache
+        let mut local_cache = get_local_cache(cache_path.to_str().unwrap());
+
+        // Filter valid patches (unapplied)
+        let patches_to_process = filter_unapplied_patches(&patches, &local_cache);
+        
+        if patches_to_process.is_empty() {
+             let _ = app_clone.emit_all("patching-status", PatchingStatus {
+                status: "ready".to_string(),
+                current: None,
+                total: None,
+                filename: None,
+                error: None,
+            });
+            return;
+        }
+
+        for (i, patch) in patches_to_process.iter().enumerate() {
             let patch_url = format!("{}/{}", patch_server.patch_url, patch.filename);
             let temp_path = temp_dir.join(&patch.filename);
 
@@ -126,7 +146,7 @@ async fn start_update(
             let _ = app_clone.emit_all("patching-status", PatchingStatus {
                 status: "downloading".to_string(),
                 current: Some(i as u32 + 1),
-                total: Some(patches.len() as u32),
+                total: Some(patches_to_process.len() as u32),
                 filename: Some(patch.filename.clone()),
                 error: None,
             });
@@ -161,18 +181,32 @@ async fn start_update(
             let _ = app_clone.emit_all("patching-status", PatchingStatus {
                 status: "patching".to_string(),
                 current: Some(i as u32 + 1),
-                total: Some(patches.len() as u32),
+                total: Some(patches_to_process.len() as u32),
                 filename: Some(patch.filename.clone()),
                 error: None,
             });
 
             // Extract/Apply
+            let target_grf = patch.target_grf.as_deref().unwrap_or(&config.client.default_grf_name);
+            
+            // If forced extract or no target GRF logic (handled inside extract_thor_patch for now, but we pass options here)
+            // Note: Our extract_thor_patch function currently takes (thor_path, target_dir, default_grf_name).
+            // We need to modify it momentarily or rely on its internal logic.
+            // Wait, I should've checked extract_thor_patch signature. It is:
+            // fn extract_thor_patch(thor_path: &str, target_dir: &str, default_grf_name: &str)
+            // It puts data/ files into GRF and others to disk.
+            // If force_extract is true, we might want to bypass that. But for now, let's respect target_grf.
+            
+            // NOTE: Current implementation of extract_thor_patch discriminates based on file path (data/).
+            // To support force_extract correctly, we might need to modify extract_thor_patch later.
+            // For this step, I will use the patch's target_grf if provided.
+            
             if let Err(e) = extract_thor_patch(
                 &temp_path.to_string_lossy(),
                 &target_dir,
-                &config.client.default_grf_name,
+                target_grf,
             ) {
-                let error_msg = config.messages.as_ref()
+                 let error_msg = config.messages.as_ref()
                     .and_then(|m| m.patching.as_ref())
                     .and_then(|p| p.error_extract.clone())
                     .unwrap_or_else(|| format!("Extraction failed: {}", e));
@@ -189,6 +223,13 @@ async fn start_update(
 
             // Cleanup
             let _ = std::fs::remove_file(temp_path);
+
+            // Save state after success
+            local_cache.installed_patches.push(patch.index);
+            local_cache.last_patch_id = patch.index; // Assuming sequential, but good enough
+            local_cache.last_check = chrono::Utc::now().to_rfc3339();
+            
+            let _ = save_local_cache(cache_path.to_str().unwrap(), &local_cache);
         }
 
         // Done
@@ -330,7 +371,7 @@ fn reset_cache() -> Result<CommandResult, String> {
         .map_err(|e| e.to_string())?
         .parent()
         .ok_or("Failed to get directory")?
-        .join("patch-cache.json");
+        .join("autopatcher.dat");
 
     if cache_path.exists() {
         std::fs::remove_file(cache_path).map_err(|e| e.to_string())?;
