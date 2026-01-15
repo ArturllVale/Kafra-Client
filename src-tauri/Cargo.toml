@@ -1,0 +1,38 @@
+[package]
+name = "kafra-client"
+version = "1.0.0"
+description = "Kafra Client - A premium Ragnarok Online patcher/launcher"
+authors = ["you"]
+license = "MIT"
+repository = ""
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+tauri-build = { version = "1.5", features = [] }
+
+[dependencies]
+tauri = { version = "1.5", features = [ "process-exit", "shell-open", "process-command-api", "fs-all", "http-all"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+reqwest = { version = "0.11", features = ["stream", "blocking"] }
+tokio = { version = "1", features = ["full"] }
+zip = "0.6"
+flate2 = "1.0"
+futures-util = "0.3"
+chrono = "0.4"
+open = "5.0"
+
+[features]
+# This feature is used for production builds or when `devPath` points to the filesystem
+# DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+panic = "abort"   # Strip expensive panic clean-up logic
+codegen-units = 1 # Compile crates one after another so the compiler can optimize better
+lto = true        # Enables link to optimizations
+opt-level = "z"   # Optimize for binary size
+strip = true      # Remove debug symbols

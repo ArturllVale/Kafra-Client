@@ -3,9 +3,11 @@ import { PatcherUI } from './components/PatcherUI';
 import { SettingsModal } from './components/SettingsModal';
 import { TitleBar } from './components/TitleBar';
 import { PatcherConfig, PatchingStatus, DownloadProgress } from './types/patcher';
+import { invoke } from '@tauri-apps/api/tauri';
+import { listen } from '@tauri-apps/api/event';
 
-// Check if running in Electron
-const isElectron = typeof window !== 'undefined' && window.patcher !== undefined;
+// Check if running in Tauri
+const isTauri = typeof window !== 'undefined' && window.__TAURI__ !== undefined;
 
 const App: React.FC = () => {
     const [config, setConfig] = useState<PatcherConfig | null>(null);
@@ -43,17 +45,10 @@ const App: React.FC = () => {
         let cleanupMinimize: (() => void) | undefined;
         let cleanupRestore: (() => void) | undefined;
 
-        if (isElectron) {
-            cleanupMinimize = window.patcher.onWindowMinimized(() => {
-                console.log("Window minimized, pausing music");
-                audio.pause();
-            });
-
-            cleanupRestore = window.patcher.onWindowRestored(() => {
-                console.log("Window restored, resuming music");
-                // Resume play, the mute effect will pause it immediately if needed
-                audio.play().catch(console.error);
-            });
+        if (isTauri) {
+            // Window minimize/restore events are handled differently in Tauri
+            // We can listen to window events if needed, but for now we'll skip this
+            // as the music control is less critical
         }
 
         return () => {
@@ -61,7 +56,7 @@ const App: React.FC = () => {
             cleanupMinimize?.();
             cleanupRestore?.();
         };
-    }, [audio, config]); // Removed isMuted from dependencies to prevent reload
+    }, [audio, config]);
 
     // Handle Mute/Unmute (Pause/Play)
     useEffect(() => {
@@ -79,9 +74,9 @@ const App: React.FC = () => {
     // Load configuration on mount
     useEffect(() => {
         const loadConfig = async () => {
-            if (isElectron) {
+            if (isTauri) {
                 try {
-                    const cfg = await window.patcher.getConfig();
+                    const cfg = await invoke<PatcherConfig>('get_config');
                     setConfig(cfg);
                 } catch (err) {
                     console.error('Failed to load config:', err);
@@ -89,7 +84,7 @@ const App: React.FC = () => {
             } else {
                 // Mock config for development in browser
                 setConfig({
-                    window: { title: 'RPatchur', width: 900, height: 600, resizable: false },
+                    window: { title: 'Kafra Client', width: 900, height: 600, resizable: false },
                     play: { path: 'ragnarok.exe', arguments: [], exit_on_success: true },
                     web: {
                         index_url: '',
@@ -107,35 +102,37 @@ const App: React.FC = () => {
 
     // Subscribe to patching events
     useEffect(() => {
-        if (!isElectron) return;
+        if (!isTauri) return;
 
-        const unsubStatus = window.patcher.onPatchingStatus((data) => {
-            setStatus(data);
-            if (data.error) {
-                setError(data.error);
-            }
-        });
+        let unlistenStatus: (() => void) | null = null;
+        let unlistenProgress: (() => void) | null = null;
 
-        const unsubProgress = window.patcher.onDownloadProgress((data) => {
-            setProgress(data);
-        });
+        const setupListeners = async () => {
+            unlistenStatus = await listen<PatchingStatus>('patching-status', (event) => {
+                setStatus(event.payload);
+                if (event.payload.error) {
+                    setError(event.payload.error);
+                }
+            });
 
-        const unsubPatch = window.patcher.onPatchApplied(({ filename }) => {
-            console.log('Patch applied:', filename);
-        });
+            unlistenProgress = await listen<DownloadProgress>('download-progress', (event) => {
+                setProgress(event.payload);
+            });
+        };
+
+        setupListeners();
 
         return () => {
-            unsubStatus();
-            unsubProgress();
-            unsubPatch();
+            if (unlistenStatus) unlistenStatus();
+            if (unlistenProgress) unlistenProgress();
         };
     }, []);
 
     // Start update automatically on load
     useEffect(() => {
-        if (config && isElectron) {
+        if (config && isTauri) {
             handleStartUpdate();
-        } else if (config && !isElectron) {
+        } else if (config && !isTauri) {
             // Simulate patching for browser development
             simulatePatching();
         }
@@ -165,103 +162,126 @@ const App: React.FC = () => {
     };
 
     const handleStartUpdate = useCallback(async () => {
-        if (!isElectron) {
+        if (!isTauri) {
             simulatePatching();
             return;
         }
 
         setError(null);
-        const result = await window.patcher.startUpdate();
-        if (!result.success && result.error) {
-            setError(result.error);
+        try {
+            await invoke('start_update');
+        } catch (error: any) {
+            setError(error);
         }
     }, []);
 
     const handleCancelUpdate = useCallback(() => {
-        if (isElectron) {
-            window.patcher.cancelUpdate();
+        if (isTauri) {
+            invoke('cancel_update');
         }
         setStatus({ status: 'idle' });
         setProgress(null);
     }, []);
 
     const handlePlay = useCallback(async () => {
-        if (!isElectron) {
-            alert('Game would launch here in Electron');
+        if (!isTauri) {
+            alert('Game would launch here in Tauri');
             return;
         }
 
-        const result = await window.patcher.play();
-        if (!result.success && result.error) {
-            setError(result.error);
+        try {
+            const result = await invoke<{ success: boolean; error?: string }>('launch_game');
+            if (!result.success && result.error) {
+                setError(result.error);
+            }
+        } catch (error: any) {
+            setError(error);
         }
     }, []);
 
     const handleSetup = useCallback(async () => {
-        if (!isElectron) {
-            alert('Setup would launch here in Electron');
+        if (!isTauri) {
+            alert('Setup would launch here in Tauri');
             return;
         }
 
-        const result = await window.patcher.setup();
-        if (!result.success && result.error) {
-            setError(result.error);
+        try {
+            const result = await invoke<{ success: boolean; error?: string }>('launch_setup');
+            if (!result.success && result.error) {
+                setError(result.error);
+            }
+        } catch (error: any) {
+            setError(error);
         }
     }, []);
 
     const handleLogin = useCallback(async (username: string, password: string) => {
-        if (!isElectron) {
-            alert(`Login with ${username} would happen here in Electron`);
+        if (!isTauri) {
+            alert(`Login with ${username} would happen here in Tauri`);
             return;
         }
 
-        const result = await window.patcher.login({ username, password });
-        if (!result.success && result.error) {
-            setError(result.error);
+        try {
+            const result = await invoke<{ success: boolean; error?: string }>('sso_login', { username, password });
+            if (!result.success && result.error) {
+                setError(result.error);
+            }
+        } catch (error: any) {
+            setError(error);
         }
     }, []);
 
 
     const handleResetCache = useCallback(async () => {
-        if (!isElectron) return;
+        if (!isTauri) return;
 
-        const result = await window.patcher.resetCache();
-        if (result.success) {
-            handleStartUpdate();
-        } else if (result.error) {
-            setError(result.error);
+        try {
+            const result = await invoke<{ success: boolean; error?: string }>('reset_cache');
+            if (result.success) {
+                handleStartUpdate();
+            } else if (result.error) {
+                setError(result.error);
+            }
+        } catch (error: any) {
+            setError(error);
         }
     }, [handleStartUpdate]);
 
     const handleToggleGrf = useCallback(async () => {
-        if (!isElectron) {
+        if (!isTauri) {
             setIsGrayFloor(!isGrayFloor);
             return;
         }
 
-        const result = await window.patcher.toggleGrf({
-            normal: 'adata.grf',
-            gray: 'sdata.grf'
-        });
+        try {
+            const result = await invoke<{ success: boolean; is_gray?: boolean; error?: string }>('toggle_grf', {
+                normal: 'adata.grf',
+                gray: 'sdata.grf'
+            });
 
-        if (result.success) {
-            setIsGrayFloor(result.isGray || false);
-        } else if (result.error) {
-            setError(result.error);
+            if (result.success) {
+                setIsGrayFloor(result.is_gray || false);
+            } else if (result.error) {
+                setError(result.error);
+            }
+        } catch (error: any) {
+            setError(error);
         }
     }, [isGrayFloor]);
 
-    const handleMinimize = useCallback(() => {
-        if (isElectron) {
-            window.patcher.minimize();
+    const handleMinimize = useCallback(async () => {
+        if (isTauri) {
+            const { appWindow } = await import('@tauri-apps/api/window');
+            appWindow.minimize();
         } else {
             console.log('Minimize (Mock)');
         }
     }, []);
 
-    const handleClose = useCallback(() => {
-        if (isElectron) {
-            window.patcher.close();
+    const handleClose = useCallback(async () => {
+        if (isTauri) {
+            const { appWindow } = await import('@tauri-apps/api/window');
+            appWindow.close();
         } else {
             alert('Close (Mock): In production this closes the window.');
         }

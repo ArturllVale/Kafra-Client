@@ -1,0 +1,6 @@
+use tauri::api::shell;
+
+#[tauri::command]
+fn open_external(url: String) -> Result<(), String> {
+    shell::open(&url, None as Option<&str>).map_err(|e| e.to_string())
+}
