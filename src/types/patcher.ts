@@ -11,7 +11,6 @@ export interface PatcherAPI {
     startUpdate: () => Promise<{ success: boolean; error?: string; message?: string }>;
     cancelUpdate: () => void;
     resetCache: () => Promise<{ success: boolean; error?: string }>;
-    manualPatch: () => Promise<{ success: boolean; error?: string }>;
 
     // Game launching
     play: () => Promise<{ success: boolean; error?: string }>;
@@ -109,6 +108,14 @@ export interface PatcherConfig {
             };
         };
     };
+    custom_actions?: CustomAction[];
+}
+
+export interface CustomAction {
+    label: string;
+    type: 'exe' | 'link';
+    target: string;
+    color?: string; // Optional hex or class name (will be sanitized/handled in UI)
 }
 
 export type PatchingStatusType = 'idle' | 'checking' | 'downloading' | 'patching' | 'ready' | 'error';

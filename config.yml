@@ -62,6 +62,19 @@ messages:
       sso_login: "Login Rápido (SSO)"
       server_status: "Status do Servidor"
       actions: "Ações"
+
+  # Custom Actions Buttons
+  # Available types: 'exe' (opens executable relative to game folder), 'link' (opens URL in browser)
+  # Color is optional. If not provided, uses default button style.
+  custom_actions:
+    - label: "Loja de Cash"
+      type: "link"
+      target: "https://myserver.com/shop"
+      color: "#fbbf24"
+    - label: "Configurações"
+      type: "exe"
+      target: "opensetup.exe"
+
     buttons:
       login: "Entrar"
       setup: "Configurar"

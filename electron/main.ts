@@ -40,7 +40,7 @@ function createWindow() {
     // Development vs Production URL
     if (process.env.NODE_ENV === 'development' || !app.isPackaged) {
         mainWindow.loadURL('http://localhost:5173');
-        mainWindow.webContents.openDevTools({ mode: 'detach' });
+        // mainWindow.webContents.openDevTools({ mode: 'detach' });
     } else {
         mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
     }
@@ -270,37 +270,6 @@ function setupIpcHandlers() {
         }
     });
 
-    // Manual patch
-    ipcMain.handle('manual-patch', async () => {
-        const result = await dialog.showOpenDialog(mainWindow!, {
-            title: 'Select THOR Patch File',
-            filters: [{ name: 'THOR Patches', extensions: ['thor'] }],
-            properties: ['openFile']
-        });
-
-        if (result.canceled || result.filePaths.length === 0) {
-            return { success: false, error: 'No file selected' };
-        }
-
-        try {
-            mainWindow?.webContents.send('patching-status', {
-                status: 'patching',
-                filename: path.basename(result.filePaths[0])
-            });
-
-            const targetDir = path.dirname(app.getPath('exe'));
-            await extractThorPatch(result.filePaths[0], targetDir, config?.client?.default_grf_name || 'data.grf');
-
-            mainWindow?.webContents.send('patching-status', { status: 'ready' });
-            mainWindow?.webContents.send('patch-applied', { filename: path.basename(result.filePaths[0]) });
-
-            return { success: true };
-        } catch (error) {
-            const errorMsg = error instanceof Error ? error.message : 'Failed to apply patch';
-            mainWindow?.webContents.send('patching-status', { status: 'error', error: errorMsg });
-            return { success: false, error: errorMsg };
-        }
-    });
 
     // Reset cache
     ipcMain.handle('reset-cache', async () => {

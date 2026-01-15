@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PatchingStatus, DownloadProgress } from '../types/patcher';
+import { PatchingStatus, DownloadProgress, CustomAction } from '../types/patcher';
 import { ProgressBar } from './ProgressBar';
 
 interface PatcherUIProps {
@@ -10,7 +10,6 @@ interface PatcherUIProps {
     onPlay: () => void;
     onSetup?: () => void;
     onLogin: (username: string, password: string) => void;
-    onManualPatch: () => void;
     onResetCache: () => void;
     onRetry: () => void;
     onCancel: () => void;
@@ -28,7 +27,6 @@ export const PatcherUI: React.FC<PatcherUIProps> = ({
     onPlay,
     onSetup,
     onLogin,
-    onManualPatch,
     onResetCache,
     onRetry,
     onCancel,
@@ -217,19 +215,31 @@ export const PatcherUI: React.FC<PatcherUIProps> = ({
                                     : (config?.messages?.ui?.buttons?.toggle_normal || 'Enable Gray Floor')}
                             </button>
                             <button
-                                onClick={onManualPatch}
-                                disabled={isPatching}
-                                className="w-full btn-secondary text-xs disabled:opacity-50"
-                            >
-                                {config?.messages?.ui?.buttons?.manual_patch || 'Manual Patch'}
-                            </button>
-                            <button
                                 onClick={onResetCache}
                                 disabled={isPatching}
                                 className="w-full btn-secondary text-xs disabled:opacity-50"
                             >
                                 {config?.messages?.ui?.buttons?.reset_cache || 'Reset Cache'}
                             </button>
+
+                            {/* Config-Driven Custom Actions */}
+                            {config?.custom_actions?.map((action: CustomAction, index: number) => (
+                                <button
+                                    key={index}
+                                    onClick={() => {
+                                        if (action.type === 'exe') {
+                                            window.patcher.launchExe(action.target);
+                                        } else if (action.type === 'link') {
+                                            window.patcher.openExternal(action.target);
+                                        }
+                                    }}
+                                    disabled={isPatching}
+                                    className="w-full btn-secondary text-xs disabled:opacity-50"
+                                    style={action.color ? { backgroundColor: action.color, borderColor: action.color, color: '#fff' } : undefined}
+                                >
+                                    {action.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>

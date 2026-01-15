@@ -18,8 +18,6 @@ contextBridge.exposeInMainWorld('patcher', {
     cancelUpdate: () => ipcRenderer.send('cancel-update'),
     resetCache: (): Promise<{ success: boolean; error?: string }> =>
         ipcRenderer.invoke('reset-cache'),
-    manualPatch: (): Promise<{ success: boolean; error?: string }> =>
-        ipcRenderer.invoke('manual-patch'),
 
     // Game launching
     play: (): Promise<{ success: boolean; error?: string }> =>

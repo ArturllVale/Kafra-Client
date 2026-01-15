@@ -221,17 +221,6 @@ const App: React.FC = () => {
         }
     }, []);
 
-    const handleManualPatch = useCallback(async () => {
-        if (!isElectron) {
-            alert('Manual patch dialog would open here in Electron');
-            return;
-        }
-
-        const result = await window.patcher.manualPatch();
-        if (!result.success && result.error) {
-            setError(result.error);
-        }
-    }, []);
 
     const handleResetCache = useCallback(async () => {
         if (!isElectron) return;
@@ -298,7 +287,6 @@ const App: React.FC = () => {
                     onPlay={handlePlay}
                     onSetup={config?.setup ? handleSetup : undefined}
                     onLogin={handleLogin}
-                    onManualPatch={handleManualPatch}
                     onResetCache={handleResetCache}
                     onRetry={handleStartUpdate}
                     onCancel={handleCancelUpdate}
