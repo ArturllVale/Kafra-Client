@@ -4,7 +4,9 @@
 mod config;
 mod patcher;
 
-use config::{load_config, PatcherConfig};
+use config::PatcherConfig;
+#[cfg(debug_assertions)]
+use config::load_config;
 use patcher::downloader::{download_patch, DownloadProgress};
 use patcher::patch_list::fetch_patch_list;
 use patcher::thor_patcher::extract_thor_patch;
@@ -401,59 +403,60 @@ fn launch_exe(exe_path: String) -> Result<CommandResult, String> {
 }
 
 fn main() {
-    // Load configuration
-    let exe_path = std::env::current_exe().unwrap();
-    let mut config_path = exe_path.parent().unwrap().join("config.yml");
-    
-    println!("[DEBUG] Executable path: {:?}", exe_path);
-    println!("[DEBUG] Initial config path: {:?}", config_path);
-    println!("[DEBUG] Config exists at initial path: {}", config_path.exists());
-    
-    #[cfg(debug_assertions)]
-    {
-        // In debug mode, try to read from the project root
-        // CWD is usually src-tauri, so we need to check the parent directory
-        if let Ok(cwd) = std::env::current_dir() {
-            println!("[DEBUG] Current working directory: {:?}", cwd);
-            
-            // First, check if config exists in CWD
-            let dev_path = cwd.join("config.yml");
-            println!("[DEBUG] Dev config path (cwd): {:?}", dev_path);
-            
-            if dev_path.exists() {
-                config_path = dev_path;
-                println!("[DEBUG] Using config from CWD: {:?}", config_path);
-            } else if let Some(parent) = cwd.parent() {
-                // Check parent directory (project root when CWD is src-tauri)
-                let root_path = parent.join("config.yml");
-                println!("[DEBUG] Dev config path (project root): {:?}", root_path);
-                
-                if root_path.exists() {
-                    config_path = root_path;
-                    println!("[DEBUG] Using config from project root: {:?}", config_path);
-                }
-            }
-        }
-    }
-
-    println!("[DEBUG] Final config path: {:?}", config_path);
-
-    let config = if config_path.exists() {
-        match load_config(&config_path) {
-            Ok(cfg) => {
-                println!("[DEBUG] Config loaded successfully!");
-                println!("[DEBUG] Window title: {}", cfg.window.title);
-                println!("[DEBUG] Window size: {}x{}", cfg.window.width, cfg.window.height);
-                Some(cfg)
-            }
+    // In release mode, config is embedded at compile time
+    #[cfg(not(debug_assertions))]
+    let config = {
+        const EMBEDDED_CONFIG: &str = include_str!("../../config.yml");
+        match serde_yaml::from_str::<PatcherConfig>(EMBEDDED_CONFIG) {
+            Ok(cfg) => Some(cfg),
             Err(e) => {
-                println!("[ERROR] Failed to load config: {}", e);
+                eprintln!("Failed to parse embedded config: {}", e);
                 Some(PatcherConfig::default())
             }
         }
-    } else {
-        println!("[DEBUG] Config file not found, using defaults");
-        Some(PatcherConfig::default())
+    };
+
+    // In debug mode, load config from external file for easier development
+    #[cfg(debug_assertions)]
+    let config = {
+        let exe_path = std::env::current_exe().unwrap();
+        let mut config_path = exe_path.parent().unwrap().join("config.yml");
+        
+        println!("[DEBUG] Executable path: {:?}", exe_path);
+        
+        // Try to find config in project root (parent of src-tauri)
+        if let Ok(cwd) = std::env::current_dir() {
+            println!("[DEBUG] Current working directory: {:?}", cwd);
+            
+            let dev_path = cwd.join("config.yml");
+            if dev_path.exists() {
+                config_path = dev_path;
+            } else if let Some(parent) = cwd.parent() {
+                let root_path = parent.join("config.yml");
+                if root_path.exists() {
+                    config_path = root_path;
+                }
+            }
+        }
+        
+        println!("[DEBUG] Final config path: {:?}", config_path);
+        
+        if config_path.exists() {
+            match load_config(&config_path) {
+                Ok(cfg) => {
+                    println!("[DEBUG] Config loaded: {} ({}x{})", 
+                        cfg.window.title, cfg.window.width, cfg.window.height);
+                    Some(cfg)
+                }
+                Err(e) => {
+                    println!("[ERROR] Failed to load config: {}", e);
+                    Some(PatcherConfig::default())
+                }
+            }
+        } else {
+            println!("[DEBUG] Config not found, using defaults");
+            Some(PatcherConfig::default())
+        }
     };
 
     let app_state = AppState {
@@ -467,12 +470,7 @@ fn main() {
             let config_lock = state.config.lock().unwrap();
 
             if let Some(config) = &*config_lock {
-                println!("[DEBUG] Setup: Applying window config...");
-                println!("[DEBUG] Setup: Title = {}", config.window.title);
-                println!("[DEBUG] Setup: Size = {}x{}", config.window.width, config.window.height);
-                
                 if let Some(window) = app.get_window("main") {
-                    println!("[DEBUG] Setup: Got main window, applying settings...");
                     let _ = window.set_title(&config.window.title);
                     let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
                         width: config.window.width,
@@ -480,12 +478,7 @@ fn main() {
                     }));
                     let _ = window.set_resizable(config.window.resizable);
                     let _ = window.center();
-                    println!("[DEBUG] Setup: Window settings applied!");
-                } else {
-                    println!("[ERROR] Setup: Could not get main window!");
                 }
-            } else {
-                println!("[ERROR] Setup: No config in state!");
             }
             Ok(())
         })

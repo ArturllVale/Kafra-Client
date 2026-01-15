@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
+#[cfg(debug_assertions)]
 use std::fs;
+#[cfg(debug_assertions)]
 use std::path::Path;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -217,6 +219,7 @@ impl Default for PatcherConfig {
     }
 }
 
+#[cfg(debug_assertions)]
 pub fn load_config<P: AsRef<Path>>(path: P) -> Result<PatcherConfig, String> {
     let content = fs::read_to_string(path)
         .map_err(|e| format!("Failed to read config file: {}", e))?;
