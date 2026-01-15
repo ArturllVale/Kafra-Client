@@ -18642,14 +18642,7 @@ var _eval = EvalError;
 var range = RangeError;
 var ref = ReferenceError;
 var syntax = SyntaxError;
-var type;
-var hasRequiredType;
-function requireType() {
-  if (hasRequiredType) return type;
-  hasRequiredType = 1;
-  type = TypeError;
-  return type;
-}
+var type = TypeError;
 var uri = URIError;
 var abs$1 = Math.abs;
 var floor$1 = Math.floor;
@@ -18895,7 +18888,7 @@ function requireCallBindApplyHelpers() {
   if (hasRequiredCallBindApplyHelpers) return callBindApplyHelpers;
   hasRequiredCallBindApplyHelpers = 1;
   var bind3 = functionBind;
-  var $TypeError2 = requireType();
+  var $TypeError2 = type;
   var $call2 = requireFunctionCall();
   var $actualApply = requireActualApply();
   callBindApplyHelpers = function callBindBasic(args) {
@@ -18968,7 +18961,7 @@ var $EvalError = _eval;
 var $RangeError = range;
 var $ReferenceError = ref;
 var $SyntaxError = syntax;
-var $TypeError$1 = requireType();
+var $TypeError$1 = type;
 var $URIError = uri;
 var abs = abs$1;
 var floor = floor$1;
@@ -19299,7 +19292,7 @@ var GetIntrinsic2 = getIntrinsic;
 var $defineProperty = GetIntrinsic2("%Object.defineProperty%", true);
 var hasToStringTag = requireShams()();
 var hasOwn$1 = hasown;
-var $TypeError = requireType();
+var $TypeError = type;
 var toStringTag = hasToStringTag ? Symbol.toStringTag : null;
 var esSetTostringtag = function setToStringTag(object, value) {
   var overrideIfSet = arguments.length > 2 && !!arguments[2] && arguments[2].force;
@@ -26876,7 +26869,6 @@ function createWindow() {
   });
   if (process.env.NODE_ENV === "development" || !electron.app.isPackaged) {
     mainWindow.loadURL("http://localhost:5173");
-    mainWindow.webContents.openDevTools({ mode: "detach" });
   } else {
     mainWindow.loadFile(path$1.join(__dirname$1, "../dist/index.html"));
   }
@@ -27041,32 +27033,6 @@ function setupIpcHandlers() {
       return { success: true };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : "Failed to launch with SSO" };
-    }
-  });
-  electron.ipcMain.handle("manual-patch", async () => {
-    var _a;
-    const result = await electron.dialog.showOpenDialog(mainWindow, {
-      title: "Select THOR Patch File",
-      filters: [{ name: "THOR Patches", extensions: ["thor"] }],
-      properties: ["openFile"]
-    });
-    if (result.canceled || result.filePaths.length === 0) {
-      return { success: false, error: "No file selected" };
-    }
-    try {
-      mainWindow == null ? void 0 : mainWindow.webContents.send("patching-status", {
-        status: "patching",
-        filename: path$1.basename(result.filePaths[0])
-      });
-      const targetDir = path$1.dirname(electron.app.getPath("exe"));
-      await extractThorPatch(result.filePaths[0], targetDir, ((_a = config == null ? void 0 : config.client) == null ? void 0 : _a.default_grf_name) || "data.grf");
-      mainWindow == null ? void 0 : mainWindow.webContents.send("patching-status", { status: "ready" });
-      mainWindow == null ? void 0 : mainWindow.webContents.send("patch-applied", { filename: path$1.basename(result.filePaths[0]) });
-      return { success: true };
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : "Failed to apply patch";
-      mainWindow == null ? void 0 : mainWindow.webContents.send("patching-status", { status: "error", error: errorMsg });
-      return { success: false, error: errorMsg };
     }
   });
   electron.ipcMain.handle("reset-cache", async () => {

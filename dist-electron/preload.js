@@ -11,7 +11,6 @@ electron.contextBridge.exposeInMainWorld("patcher", {
   startUpdate: () => electron.ipcRenderer.invoke("start-update"),
   cancelUpdate: () => electron.ipcRenderer.send("cancel-update"),
   resetCache: () => electron.ipcRenderer.invoke("reset-cache"),
-  manualPatch: () => electron.ipcRenderer.invoke("manual-patch"),
   // Game launching
   play: () => electron.ipcRenderer.invoke("launch-game"),
   setup: () => electron.ipcRenderer.invoke("launch-setup"),
